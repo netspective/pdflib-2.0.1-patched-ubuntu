@@ -1,0 +1,135 @@
+# Generated automatically from Makefile.in by configure.
+# Makefile for PDFlib
+
+VERSION = 2.01
+
+SHELL = /bin/sh
+INSTALL = /usr/bin/install -c
+
+srcdir = .
+
+EXE	= 
+OBJ	= o
+AR	= ar rc
+CC	= gcc
+RM      = rm -f
+SO	= .so
+RANLIB	= ranlib
+
+# installation directories
+prefix = /usr/local
+exec_prefix = ${prefix}
+
+# directories for the final library and include files for PDFlib users
+libdir = ${exec_prefix}/lib
+includedir = ${prefix}/include
+
+TIFFINC	= 
+ZLIBINC	= -I/usr/include
+
+# position independent code for shared libraries
+LDSHARED = gcc -shared
+
+# Either pdflib.a or pdflib.so, selected by configure script
+PDFLIB		= libpdf2.01.so
+PDFLIB_STATIC	= libpdf2.01.a
+PDFLIB_SHARED	= libpdf2.01.so
+
+CFLAGS = -c   -g -O2  -fpic $(TIFFINC) $(ZLIBINC)
+
+.SUFFIXES: .c
+
+.c.o:
+	$(CC) $(CFLAGS) $(DEFINES) $<
+
+SRC	= \
+	$(srcdir)/p_afmparse.c	\
+	$(srcdir)/p_annots.c	\
+	$(srcdir)/p_basic.c	\
+	$(srcdir)/p_ccitt.c	\
+	$(srcdir)/p_color.c	\
+	$(srcdir)/p_draw.c	\
+	$(srcdir)/p_filter.c	\
+	$(srcdir)/p_font.c	\
+	$(srcdir)/p_gif.c	\
+	$(srcdir)/p_gstate.c	\
+	$(srcdir)/p_hyper.c	\
+	$(srcdir)/p_image.c	\
+	$(srcdir)/p_jpeg.c	\
+	$(srcdir)/p_text.c	\
+	$(srcdir)/p_tiff.c	\
+	$(srcdir)/p_util.c
+
+OBJS	= \
+	$(srcdir)/p_afmparse.$(OBJ)	\
+	$(srcdir)/p_annots.$(OBJ)	\
+	$(srcdir)/p_basic.$(OBJ)	\
+	$(srcdir)/p_ccitt.$(OBJ)	\
+	$(srcdir)/p_color.$(OBJ)	\
+	$(srcdir)/p_draw.$(OBJ)		\
+	$(srcdir)/p_filter.$(OBJ)	\
+	$(srcdir)/p_font.$(OBJ)		\
+	$(srcdir)/p_gif.$(OBJ)		\
+	$(srcdir)/p_gstate.$(OBJ)	\
+	$(srcdir)/p_hyper.$(OBJ)	\
+	$(srcdir)/p_image.$(OBJ)	\
+	$(srcdir)/p_jpeg.$(OBJ)		\
+	$(srcdir)/p_text.$(OBJ)		\
+	$(srcdir)/p_tiff.$(OBJ)		\
+	$(srcdir)/p_util.$(OBJ)
+
+all:	$(PDFLIB)
+
+$(PDFLIB_STATIC):	$(OBJS)
+	$(RM) $(PDFLIB_STATIC) $(PDFLIB_SHARED)
+	$(AR) $(PDFLIB_STATIC) $(OBJS)
+	-$(RANLIB) $(PDFLIB_STATIC)
+
+$(PDFLIB_SHARED):	$(OBJS)
+	$(RM) $(PDFLIB_STATIC) $(PDFLIB_SHARED)
+	$(LDSHARED) -o $(PDFLIB_SHARED) $(OBJS)
+
+clean:
+	-$(RM) $(OBJS) $(PDFLIB_STATIC) $(PDFLIB_SHARED)
+
+maintainer-clean: clean
+	-$(RM) Makefile.in.bak
+
+install: $(PDFLIB)
+	$(INSTALL) pdflib.h $(includedir)
+	$(INSTALL) $(PDFLIB) $(libdir)
+	cd $(libdir);						\
+	if test $(PDFLIB) != $(PDFLIB_STATIC); then		\
+		(ldconfig || true)  >/dev/null 2>&1; 		\
+	else							\
+		$(RANLIB) $(libdir)/$(PDFLIB_STATIC);		\
+        fi
+
+uninstall:
+	-$(RM) $(includedir)/pdflib.h
+	-$(RM) $(libdir)/$(PDFLIB_STATIC) $(libdir)/$(PDFLIB_SHARED)
+
+depend:
+	cp Makefile.in Makefile.in.bak
+	sed '/^# Automatically generated dependencies/q' Makefile.in.bak >Makefile.in
+	$(CC) $(CFLAGS) -MM $(SRC)>>Makefile.in
+
+# Automatically generated dependencies
+p_afmparse.o: ./p_afmparse.c p_intern.h pdflib.h p_config.h \
+ p_afmparse.h
+p_annots.o: ./p_annots.c p_intern.h pdflib.h p_config.h
+p_basic.o: ./p_basic.c p_intern.h pdflib.h p_config.h
+p_ccitt.o: ./p_ccitt.c p_intern.h pdflib.h p_config.h
+p_color.o: ./p_color.c p_intern.h pdflib.h p_config.h
+p_draw.o: ./p_draw.c p_intern.h pdflib.h p_config.h
+p_filter.o: ./p_filter.c p_intern.h pdflib.h p_config.h
+p_font.o: ./p_font.c p_intern.h pdflib.h p_config.h p_afmparse.h \
+ ansi_e.h macrom_e.h pdfdoc_e.h p_metrics.h
+p_gif.o: ./p_gif.c p_intern.h pdflib.h p_config.h
+p_gstate.o: ./p_gstate.c p_intern.h pdflib.h p_config.h
+p_hyper.o: ./p_hyper.c p_intern.h pdflib.h p_config.h
+p_image.o: ./p_image.c p_intern.h pdflib.h p_config.h
+p_jpeg.o: ./p_jpeg.c p_intern.h pdflib.h p_config.h
+p_text.o: ./p_text.c p_intern.h pdflib.h p_config.h p_afmparse.h
+p_tiff.o: ./p_tiff.c p_intern.h pdflib.h p_config.h
+p_util.o: ./p_util.c p_intern.h pdflib.h p_config.h

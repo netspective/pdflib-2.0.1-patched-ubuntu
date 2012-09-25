@@ -1,0 +1,113 @@
+ ;---------------------------------------------------------------------------*
+ ;        PDFlib - A library for dynamically generating PDF files            |
+ ;---------------------------------------------------------------------------+
+ ;        Copyright (c) 1997-1999 Thomas Merz. All rights reserved.          |
+ ;---------------------------------------------------------------------------+
+ ;    This software is not in the public domain.  It is subject to the       |
+ ;    "Aladdin Free Public License".  See the file license.txt for details.  |
+ ;    This license grants you the right to use and redistribute PDFlib       |
+ ;    under certain conditions. Among other things, the license requires     |
+ ;    that the copyright notice and this notice be preserved on all copies.  |
+ ;    This requirement extends to ports to other programming languages.      |
+ ;                                                                           |
+ ;    In short, you are allowed to develop and use PDFlib-based software     |
+ ;    as long as you don't sell it. Commercial use of PDFlib requires a      |
+ ;    commercial license which can be obtained from the author of PDFlib.    |
+ ;    Contact information can be found in the accompanying PDFlib manual.    |
+ ;    PDFlib is distributed with no warranty of any kind. Commercial users,  |
+ ;    however, will receive warranty and support statements in writing.      |
+ ;---------------------------------------------------------------------------*/
+
+ ; pdflib.def
+ ;
+ ; module definition file for the PDFlib DLL for Visual Basic
+ ;
+
+LIBRARY pdflib_vb
+
+DESCRIPTION "Dynamically generate PDF files"
+
+EXPORTS
+    PDF_boot
+    PDF_shutdown
+    PDF_new2
+    PDF_get_opaque
+    PDF_new
+    PDF_delete
+    PDF_open_file
+    PDF_close
+    PDF_begin_page
+    PDF_end_page
+    PDF_set_transition
+    PDF_set_duration
+    PDF_set_parameter
+    PDF_show
+    PDF_show_xy
+    PDF_continue_text
+    PDF_set_leading
+    PDF_set_text_rise
+    PDF_set_horiz_scaling
+    PDF_set_text_rendering
+    PDF_set_text_matrix
+    PDF_set_text_pos
+    PDF_set_char_spacing
+    PDF_set_word_spacing
+    PDF_get_fontname
+    PDF_get_fontsize
+    PDF_get_font
+    PDF_stringwidth
+    PDF_findfont
+    PDF_setfont
+    PDF_save
+    PDF_restore
+    PDF_translate
+    PDF_scale
+    PDF_rotate
+    PDF_setdash
+    PDF_setpolydash
+    PDF_setflat
+    PDF_setlinejoin
+    PDF_set_fillrule
+    PDF_setlinecap
+    PDF_setmiterlimit
+    PDF_setlinewidth
+    PDF_moveto
+    PDF_lineto
+    PDF_curveto
+    PDF_circle
+    PDF_arc
+    PDF_rect
+    PDF_closepath
+    PDF_stroke
+    PDF_closepath_stroke
+    PDF_fill
+    PDF_fill_stroke
+    PDF_closepath_fill_stroke
+    PDF_endpath
+    PDF_clip
+    PDF_setgray_fill
+    PDF_setgray_stroke
+    PDF_setgray
+    PDF_setrgbcolor_fill
+    PDF_setrgbcolor_stroke
+    PDF_setrgbcolor
+    PDF_get_image_width
+    PDF_get_image_height
+    PDF_place_image
+    PDF_open_image
+    PDF_close_image
+    PDF_open_JPEG
+    PDF_open_TIFF
+    PDF_open_GIF
+    PDF_open_CCITT
+    PDF_add_bookmark
+    PDF_set_info
+    PDF_attach_file
+    PDF_add_note
+    PDF_add_pdflink
+    PDF_add_launchlink
+    PDF_add_locallink
+    PDF_add_weblink
+    PDF_set_border_style
+    PDF_set_border_color
+    PDF_set_border_dash

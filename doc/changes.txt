@@ -1,0 +1,712 @@
+V2.01 (August 3, 1999)
+=====================
+
+New features and API
+====================
+
+- Extends the JPEG reader to allow for progressive JPEG images which are
+  supported in PDF 1.3/Acrobat 4 (p_jpeg.c).
+- Applies a workaround for Photoshop-generated CMYK JPEG images. The
+  algorithm is taken from my jpeg2ps utility: detect the Adobe marker,
+  and write a suitable /Decode array to invert the 4 color planes (p_image.c).
+- Introduces the concept of a "default" encoding which evaluates to
+  macroman or winansi according to the current platform. This facilitates
+  writing identical test programs for all platforms. All samples except
+  those for Visual Basic (which is Windows-only) have been adjusted to use 
+  the default encoding.
+- Streamlines the image file interface in several ways: (pdflib.h, p_intern.h,
+  p_image.c, p_gif.c, p_tiff.c, p_jpeg.c, p_ccitt.c, p_basic.c,
+  bind/vb/pdflib_vb.idl, bind/vb/pdflib_vb.def, clients/pdfimage.c,
+  bind/cpp/pdflib.[h|c]pp, test/pdftest.c).
+  - Removes PDF_place_inline_image() since it doesn't seem to bring any
+    real advantage to PDFlib clients.
+  - Removes PDF_put_image() since the image data is "parked" in the ouput
+    immediately on PDF_open_*(). The /Name key is no longer in Xobjects
+    since it was only required by PDF 1.0.
+  - Removes PDF_execute_image(). Instead, PDF_place_image() can now be
+    called multiple times for re-using image data.
+  - Consolidates all pdf_close_*() functions in PDF_close_image. All
+    image-specific stuff is now done at the end of PDF_open_*().
+  - PDF_open_*() (along with the newly implied pdf_put_image()) is now 
+    allowed outside of page descriptions. This requires pdf_put_image()
+    to do a pdf_begin_contents_section() in some cases.
+- Adds several symbolic names for new destination zoom values in 
+  PDF_add_pdflink() and PDF_add_locallink() (p_annots.c).
+- Added an undocumented hook for placing existing images as thumbnail
+  for the current page. This is for a specialized application and is
+  not supported at the scripting layer (p_image.c, p_image.c, p_intern.h).
+- Changed PDF_open_memory_image() to PDF_open_image(). This makes memory
+  images accessible from the scripting languages, and adds support for
+  file and url references as placeholders for the actual image data
+  (pdflib.h, p_image.h, p_intern.h, bind/vb/pdflib_vb.idl, bind/cpp/pdflib.hpp, 
+  bind/cpp/pdflib.cpp).
+
+
+Bug fixes and enhancements
+==========================
+
+- A static resource configuration file (pdflib.upr) was always opened
+  when the client dynamically added resources. We skipped the file open
+  step since it's well reasonable to work with dynamic configuration
+  exclusively (p_util.c).
+- Fixes a crash due to an uninitialized member of the PDF struct
+  (resourcefile_loaded). The bug showed up when trying to use non-standard
+  fonts (p_basic.c).
+- Added a number of casts to avoid assignments to variables which are
+  never used. This basically affected the contents of comment and notice
+  lines in AFM files, which are not being used (p_afmparse.c).
+- Merged the metrics files for macroman and winansi core metrics
+  (p_metrics_win.h, p_metrics_mac.h) to a single file (p_metrics.h,
+  p_font.c, Makefile.in, pdflib/Makefile.in, PDFlib.hqx, *.dsp)
+- Makes DLLMain only visible when PDFLIB_EXPORTS is defined (p_basic.c).
+- Changed the default page transition duration to 0 in order to avoid
+  unnecessarily writing the duration key to all page dictionaries (p_hyper.c).
+- Changes to example path prefix in pdflib.upr to make it clearer that
+  the upr file has to be adjusted before it can be used (fonts/pdflib.upr).
+- The debug flags didn't work due to a typo (p_basic.c).
+- Debug flag 'u' (don't unlink PDF file on error) was implemented the wrong
+  way, and didn't match the documentation (p_basic.c).
+- Improves the memory management by avoiding "semi-allocated" aggregated
+  objects. This involves subtle changes around the realloc() calls,
+  and cleaner initialization of the reallocated data. The benefit of this
+  shows up in memory-out situations when the error handler pops in and tries
+  to free memory blocks which are not completely initialized. This may
+  especially happen in multi-threaded environments (p_intern.h, p_basic.c,
+  p_font.c, p_images.c, p_hyper.c).
+- Fixes some inconsistencies related to link border style, color, and
+  destination zoom (p_annots.c).
+- Removed the beveled, inset, and underlined link border styles since they
+  don't work as advertised in the PDF specification (p_annots.c, pdftest.c).
+- Improves the handling of XObject resources: formerly all Xobjects used
+  in the document up to the current page had been placed in the page's
+  resource list, potentially cluttering up the print stream generated for
+  the PDF. Now we only list the XObjects which are actually used on the
+  current page. This change will not affect Acrobat's viewing behavior.
+- The bpc and components values of TIFF image weren't always properly
+  reported by TIFFlib. We improved this by using TIFFGetFieldDefaulted()
+  instead of TIFFGetField() for retrieving these (p_tiff.c).
+
+
+Build process, distribution, and platform support
+=================================================
+
+- Several improvements in the configure machinery (configure.in, Makefile.in):
+  - Added a --without-cxx option to the configure script in order to make
+    life easier on systems where the C++ is not correctly recognized.
+  - The include and lib paths for perl/zlib/tifflib shown with 
+    "configure --help" had some differences from the actual spelling of 
+    the supported options.
+  - Included a number of changes to the configure script required to make
+    the shared library versioning work on NetBSD systems.
+  - The --with-perlincl option for configure didn't work.
+  - Added a number of conditionals for the Cygwin environment.
+  - Always puts the version number in the file names of the shared and
+    static PDFlib libraries. Previously the static library ended up without
+    a version number in its name, possibly leading to mismatches with later
+    versions.
+  - Introduces configure variables for the names of the shared and static
+    libraries. This allows us to easily build the "other" library (as opposed
+    to the one specified when configure was run) as well.
+- Removes the -g option from all Makefiles (pdflib/Makefile.in,
+  clients/Makefile.in, util/Makefile.in, bind/c/Makefile.in,
+  bind/cpp/Makefile.in, test/Makefile.in)
+- The util Makefile is no longer called by default since the utility programs
+  are currently not needed by ordinary library users (Makefile.in).
+- Notes that the util Makefile needs an installed PDFlib library
+  (util/Makefile.in).
+- Assorted changes suggested for supporting the Cygwin32 development
+  environment. These involved several Makefile.in files, configure.in, and
+  C source modules which make use of getopt(). Most of the changes enhanced
+  the configuration machinery for other systems, too.
+- Removes the install targets for the C and C++ bindings in the main
+  Makefile since those targets weren't used anyway (Makefile.in).
+- Changes the $@.$(OBJ) construct in all Makefiles to the actual name of
+  the object (we don't want to use $< since it doesn't work everywhere)
+  (*/Makefile.in, bind/Makefile.in).
+- Removed a leftover text file (util/readme.txt).
+- Cleaned up the configuration information in the MSVC project files.
+  Most projects now only support a "Release" configuration; only pdflib
+  and test have "Debug" configurations, too (pdflib.dsp, bind/*/*.dsp).
+- Includes a separate project for building PDFlib as a static library
+  with MSVC.
+- Better supports the Mac distribution (Makefile.in):
+  - Changes the CodeWarrior project file name suffix from the odd mu
+    character to the more Unix-friendly .mcp. Since the project file
+    doesn't contain a resource fork, there's no need to use binhex (.hqx)
+    encoding.
+  - Convert the lineends in all relevant text files to the Mac convention.
+  - Implements a procedure for setting the correct file types for all
+    relevant files (uses a utility program on the Mac).
+  - Makes a self-extracting distribution fileset for the Mac.
+  - Changes the Mac build of the shared library to link static C runtime
+    libraries (instead of the previously used DLLs). This avoids the need
+    for certain Metrowerks libraries at runtime (PDFlib.hqx).
+  - Expands the Macintosh project file with support for the Java/MRJ, Python,
+    Perl, and Tcl bindings.
+
+
+Bindings
+========
+
+- C:
+  - One of the test programs didn't check the return value of PDF_open()
+    (pdfclock.c).
+  - Corrected a typo in the clean target of the makefile (Makefile.in).
+
+- C++
+  - Changes the C++ wrapper such that setting the define BROKEN_STRINGS
+    reverts from ANSI C++ string handling to plain old C char pointers.
+    As it turned out, ANSI C++ strings are badly supported by many
+    compilers. Besides, there was a typo in the old construct (pdflib.hpp,
+    pdflib.cpp).
+
+- All SWIG bindings
+  - Introduces export pragma for exporting PDFlib routines for the SWIG
+    bindings on the Mac (pdflib/pdflib.i, bind/*/pdflib_*.c)
+
+- Java:
+  - Makes the Java binding work with the Macintosh Runtime for Java (MRJ)
+    2.1 (PDFlib.mcp).
+  - The pdflib Java initialization sleeps some time if the shared library
+    cannot be loaded. This is a benefit on systems where the Java console
+    immediately disappears on exit.
+  - The MSVC project file for the Java binding used file names with the
+    path of a beta version for all source files (Java.dsp).
+    
+- Perl:
+  - The DEFINES variable was missing in the definition of CFLAGS
+    (bind/perl/Makefile.in).
+  - Makes the Perl binding work on the Macintosh (PDFlib.mcp).
+  - Includes a first version of a MakeMaker-compatible Perl script for
+    generating a Makefile which more closely fits the Perl environment.
+    The Perl-generated Makefile can be used instead of the configure-
+    generated one in bind/perl. Note that the Perl script itself must be
+    generated by the configure script.
+  - Notes how to build the PDFlib Perl binding with recent versions of
+    Perl, e.g. 5.005_57 (bind/perl/readme.txt).
+
+- Python:
+  - The DEFINES variable was missing in the definition of CFLAGS
+    (bind/python/Makefile.in).
+  - Makes the Python binding work on the Macintosh (PDFlib.mcp).
+  - Makes the test programs exit cleanly in case of error (hello.py,
+    pdfclock.py).
+
+- Tcl:
+  - The Tcl package index file didn't get updated properly due to
+    the LD_LIBRARY_PATH variable not being properly exported
+    (bind/tcl/Makefile.in).
+  - Fixed a typo in the hello test program. Apparently it worked correctly
+    anyway because of some particular circumstances and missing type
+    checking in the SWIG-generated code (hello_tcl.pdf).
+  - Makes the Tcl binding work on the Macintosh (PDFlib.mcp).
+
+- Visual Basic:
+  - The return value of all image open functions was erroneously declared
+    void instead of int. We had to change the GUID after this correction,
+    but the 2.01 API lost some image functions anyway (pdflib_vb.idl).
+
+
+Documentation:
+- Slightly expands the comments in pdflib.upr.
+- Adds several clarifications and minor additions to the manual, and cuts
+  down the size of the PDF manual by optimizing font and image handling.
+- Adds information to the manual about configuring the shared libraries
+  for scripting under Unix, Windows, and Mac.
+- Adds descriptions of the few new features to the manual.
+- Removes the bind/*/pdflib_*.doc text files since they don't add any
+  real value to the big PDFlib manual which is supplied in PDF format.
+- Brings the sections in pdflib.h in sync with the sections in the main
+  manual (although the SWIG-generated doc files are no longer distributed).
+
+
+V2.0 (June 30, 1999)
+=====================
+
+Bug fixes and enhancements:
+- Implements a better scheme for making sure the ordering constraints
+  for PDF page descriptions are obeyed while not bothering library
+  clients with most of the details (p_gstate.c, p_draw.c, p_text.c).
+  The remaining constraints are documented in the manual.
+
+
+Build process, distribution, and platform support:
+- Further tweaks the support for shared libraries on OpenStep 4 (configure.in).
+
+
+Bindings:
+- All bindings:
+  - The shared libraries built for a specific language binding inadvertently
+    referred to a hard-coded path to the actual PDFlib library (../../pdflib).
+    In order to avoid this, the -L and -l options are used instead of
+    supplying the relative name of the library file for linking the
+    shared libraries or test programs (bind/*/Makefile.in, configure.in).
+    This means LD_LIBRARY_PATH has to be set for testing.
+
+- Java:
+  - Removes the pointless import statement from the Java samples
+    (hello.java, pdfclock.java).
+
+- Tcl:
+  - Added LD_LIBRARY_PATH when generating the Tcl package index file
+    in order to find the PDFlib shared library (bind/tcl/Makefile.in).
+
+
+Documentation:
+- Explains more of the PDF graphics model, and documents the
+  restrictions and interactions among graphics-related functions
+  (doc/PDFlib.pdf).
+
+
+V1.92 (June 27, 1999)
+=====================
+
+Bug fixes and enhancements:
+- PDF_translate() erroneously used the same value for both coordinates
+  (p_gstate.c).
+- A subtle "unreachable code" warning was issued by the Watcom
+  compiler, and he was right (p_util.c).
+- Fixed a bug in the GIF code which caused a crash on the Mac due to
+  an improper variable initialization. The bug had been introduced
+  in the transition to thread-safe GIF handling in 1.91, and didn't
+  affect other platforms.
+- Cleaned up several places which look like empty statements within
+  a conditional (p_gif.c).
+- Slightly changes the PDF output. Although legal PDF, some properties
+  caused problems with PDFviewer, a non-Adobe PDF viewer for OpenStep
+  written by Detlev Droege:
+  - Don't count the newline character into the /Length key of colormap
+    objects because this leads to problems in the PostScript output
+    generated from the PDF (p_image.c).
+  - Don't compress inline images (p_image.c).
+- A missing initialization caused a crash on Windows (p_hyper.c).
+
+
+API:
+- Implemented PDF_set_fillrule() for setting the area algorithm used
+  by PDF_fill(), PDF_fill_stroke(), PDF_closepath_fill_stroke(), and
+  PDF_clip() (pdflib.h, p_gstate.c, p_draw.c). This change was
+  requested and implemented by Evgeny Stambulchik
+  <fnevgeny@plasma-gate.weizmann.ac.il>.
+- Allows for dynamic font configuration by adding all UPR categories
+  to the list of supported parameters in PDF_set_parameter() (p_basic.c,
+  p_util.c).
+
+
+Build process, distribution, and platform support:
+- Added some compiler-dependent conditionals in order to make the
+  C++ binding work with non-ANSI compilers (bind/cpp/pdflib.hpp, pdflib.cpp).
+- Improves compatibility with OpenStep 4.x:
+  - Added an include file required for getopt (util/compile_metrics.c).
+  - Enhanced configure for shared libraries on OpenStep 4.x (configure.in).
+  - Don't build the C++ binding (configure.in).
+- Removed the additional Makefiles for MS VC++ and the complete port
+  subdirectory from the distribution (port/msvc/*).
+
+
+Bindings:
+- SWIG:
+  - Made PDF_boot() and PDF_shutdown public in order to avoid problems
+    with the SWIG wrapper files which may use them (pdflib.h).
+  - Made the exception jump buffers for the SWIG bindings static which
+    they should have been anyway (pdflib.i).
+  - Adds the define PDFLIB_STATIC to the project files for the SWIG
+    bindings on Windows because we don't want to export the core
+    PDFlib  functions from the DLL in the SWIG case.
+
+- Java:
+  - Adds a MS VC++ project file for the Java binding (bind/java/Java.dsp).
+
+- Tcl
+  - Adds a MS VC++ project file for the Tcl binding (bind/tcl/Tcl.dsp).
+
+- Perl
+  - Adds a MS VC++ project file for the Perl binding (bind/perl/Perl.dsp).
+  - Introduces patches and quirks to support PDFlib with ActivePerl on
+    Win32. Although our configuration works for a certain software
+    combination, all issues are documented (pdflib/pdflib.i, perl/readme.txt).
+  - Changed the order in which Perl executable names are searched. The
+    more likely name "perl" now is searched first (configure.in).
+  - Don't map bool to char in the Perl module on NeXT, since the Perl
+    include files contain special handling for bool which breaks with our
+    usual defines (configure.in, bind/perl/Makefile.in).
+
+- Python
+  - Adds a MS VC++ project file for the Python binding (bind/python/Python.dsp).
+
+
+Documentation:
+- doc/compatibility.txt had some deprecated advice on the use of PDF_close().
+- Added several clarifications and corrections to the manual.
+- Adds a table of tested version numbers for the language bindings to the
+  manual.
+- Reduced the number of fonts used in the manual.
+- Delivers the manual in PDF 1.2 format to avoid triggering a PostScript
+  error when printing PDF 1.3 files with color images from Acrobat 3.
+- Changed the page size format of the manual in order to cut down the
+  total number of pages.
+
+
+V1.91 (June 18, 1999)
+=====================
+
+Bug fixes and enhancements:
+- Fixed a typo involving a printf %s format in an error message (p_font.c).
+- Fixed two NULL pointer accesses for AFMs without a Weight entry
+  (p_afmparse.c, p_font.c).
+- Extends the AFM parser which was required for correctly processing certain
+  non-Adobe AFM files (p_afmparse.c):
+  - Added the new key "Characters" to the AFM parser. The value is ignored
+    since it is duplicated in "StartCharMetrics".
+  - Changes the handling of the "Version" key in AFMs such that arbitrary
+    strings are allowed after the keyword, not only single tokens.
+  - Changes the handling of the "Encoding" key in AFMs such that it is
+    optional, not required (p_afmparse.c).
+- Allow blank lines and comment lines in upr files (p_util.c).
+- Removed the remaining non-const globals in the GIF module, thus making
+  GIF processing thread-safe (p_gif.c, p_intern.h).
+- Adds multithreading for Win32 to the test bed (test/pdftest.c). This
+  nicely demonstrates PDFlib's thread-safety.
+- Changes the debug configuration and output machinery to a more flexible
+  system with control over individual debug facilities.
+- Adds const to the PDF_set_font declaration and definition.
+- Removed sys_errlist from makepsres in order to make it POSIX compliant.
+- Added some cleanup code for places discovered with a purify session:
+  - The resource handling machinery didn't close the handle to the
+    resource file (p_util.c).
+  - The client-provided resource file name wasn't freed (p_basic.c).
+  - The base structure for ligatures in the AFM parser wasn't freed
+    (p_afmparse.c).
+- Changed the cleanup routines to make sure the output file is closed
+  in case of error (p_basic.c).
+- Two non-initalized members of the PDF struct caused a core dump at 
+  clean-up time under rare circumstances (p_basic.c, p_image.c).
+- Adjusted the output format of float values to the limits documented in
+  the PDF spec (p_util.c).
+- The annotation border style and color were not correctly initialized
+  due to a typo (p_basic.c).
+- The transition info didn't get properly initialized (p_hyper.c).
+
+API:
+- (Again) bundles PDF_close_file() and PDF_close_fp() to PDF_close() since
+  clients should not be affected by the way in which the PDF had been
+  opened.
+- Slightly rearranged some functions to other C modules in order to
+  make the API structure and manual clearer.
+- Removed PDF_finalize() from the API and reworked PDF_delete() so
+  that it may be used for cleanup in case of error.
+- Changed the error handler's signature to include PDF * to make it
+  easier for client-supplied handlers to do a PDF_delete(p) (p_basic.c,
+  p_intern.h, pdflib.i).
+- Changed the first argument of the memory management procedures back
+  to PDF *, since the client can retrieve his own opaque pointer via
+  PDF_get_opaque().
+
+
+Build process, distribution, and platform support:
+- Added several casts in order to pacify the CodeWarrior compiler.
+- Added a Macintosh-encoded variant to the sample text in pdftest.c.
+- The configure script set the TIFF include path even when no TIFF support
+  was installed/found (configure.in).
+- Adds the AFM files to the distribution (again), and moves pdflib.upr to
+  the directory where the AFMs live (fonts/*.afm, fonts/*.upr).
+- Adds a --with-debug option to the configure script which activates the
+  debugging facilities, and implies building PDFlib as a static library.
+- Adds a test for the JPEG library to the configure script since the
+  JPEG library is needed by some versions of the TIFF library.
+- Changes a couple of places for compilation with the Watcom compiler:
+  - Maps the __WATCOMC__ #define to WIN32 (p_config.h).
+  - Introduced a typedef for the first function argument of PDF_new2()
+    since the Watcom compiler issues a dubious warning otherwise (pdflib.h).
+  - Includes io.h for the unlink() declaration (p_basic.c).
+- Changed the sample images included in the distribution (pdflib.gif,
+  tm.g3, acroweb_j.tif)
+- Removed the makepsres program from the distribution.
+- Adds compiler optimize flags by adding $CFLAGS to $DEFINES (configure.in).
+
+
+Bindings:
+- All SWIG bindings:
+  - The dist target in the main makefile called the version target, resulting
+    in updated access times for the SWIG-generated wrapper files. This in
+    turn resulted in SWIG being launched unnecessarily on the client system.
+    We now simply touch the wrapper files before preparing the tar file.
+
+- Java:
+  - PDF_boot() and PDF_shutdown need not be available to the Java API
+    since PDFlib booting is done automatically for the Java binding.
+  - The hello example didn't obey the new PDF_findfont() semantics
+    (bind/java/hello.java).
+
+- Perl:
+  - Fixed a typo (1 should be -1) in the font error handling line (hello.pl).
+
+- C:
+  - Moved hello.c and pdfclock.c to a separate directory bind/c.
+  - A bug in the configure.in script prevented the test rules for the C
+    and C++ bindings from being executed.
+  - The C hello example didn't obey the new/open_file semantics
+    (bind/c/hello.c).
+
+- C++:
+  - Renamed the bind/c++ directory to bind/cpp in order to avoid problems
+    with some older build environments (Makefile.in, PDFlib.dsw, configure.in).
+  - Reworks the C++ binding in order to make it work with the Watcom compiler:
+    - Don't use namespaces
+    - Special string handling, including conversion to chars.
+    - Adds a macro to change the conversion of C++ string to C chars since
+      Watcom doesn't support the ANSI conforming c_str() method.
+    - Removes the page loop and the sleep() call which had inadvertently
+      been left over.
+  - A bug in the configure.in script prevented the test rules for the C
+    and C++ bindings from being executed.
+  - Changed the PDF constructor in order to allow for client-supplied
+    error and memory management routines, and adds default NULL values for
+    these.
+
+
+Documentation:
+- Switches to version 7 of the Aladdin Free Public License, and includes
+  the license text as PDF (doc/license.pdf).
+- Includes brief API documentation files for the SWIG-generated language
+  bindings (bind/*/*.doc).
+- Includes the updated and reworked edition of the PDFlib manual
+  (doc/PDFlib.pdf).
+
+
+V1.90 (June 2, 1999)
+====================
+
+New Features:
+- Makes PDFlib thread-safe by removing the remaining few writable globals.
+- Use magic numbers for image file formats (imagepdf.c)
+- Supports Unix PostScript Resource files (*.upr) for describing the AFM 
+  and font file names, and an environment variable pointing to the resource
+  file.
+- User-defined document information field (in addition to Title, Author, etc.)
+- Unicode-enables bookmarks, text annotations, and document info entries
+  (p_hyper.c, p_annots.c, p_text.c).
+- Changed the encoding vectors according to PDF 1.3. The most relevant
+  change is the inclusion of /Euro in WinAnsi and PDFDoc encodings
+  (ansi_e.h, pdfdoc_e.h)
+- File attachment, launch, link, weblink and text annotations (p_annots.c).
+- Add file type and creator on the Mac (p_basic.c).
+- Nested bookmarks (p_hyper.c).
+- Changes the API name of the bookmark function from PDF_add_outline to
+  the more intuitive PDF_add_bookmark (p_hyper.c)
+- Removes the limits on number of pages, page contents, and number of objects
+  and introduced dynamic reallocation (p_hyper.c, p_basic.c, p_annots.c).
+- Generates a PDF-1.3 header (Acrobat 4 files). According to the PDF spec
+  this should work OK also for older viewers as long as no PDF 1.3
+  specific feature is used in the PDF file.
+- Introduces Zlib compression for images and file attachments.
+- Completely reworked the font handling. Font metrics caching now avoids
+  many AFM lookups, which dramatically speeds up PDFlib (up to a factor of 20!).
+- Implemented in-core font metrics data. This completely eliminates the
+  need for external AFM files. Using the supplied utility compile_metrics
+  arbitrary metrics files can be compiled into the PDFlib source code.
+- Adjusted the page size validation to Acrobat 4's larger limits (p_basic.c).
+- New functions to query current font name and size (p_font.c)
+- Introduced version numbers for the shared library and versioning schemes
+  for the scripting API (except Python)
+- Eliminated all enums at the API level and replaced them with string
+  arguments.
+- Eliminated the individual PDF_close_[TIFF|GIF|JPEG|CCITT|memory_image]
+  since PDF_close_image handles it all.
+- User-adjustable debug level.
+- Introduced PDF_new(), PDF_new2(), and PDF_delete, as well as PDF_open_file()
+  and PDF_close_file() and PDF_open_fp() and PDF_close_fp().
+- Made the page size parameters float in order to accomodate PDF 1.3.
+
+
+Bindings:
+- Largely improved the Perl, Tcl, and Python bindings.
+- Introduced the Java binding via JNI (bind/java).
+- Introduced a C++ wrapper class for PDFlib (bind/cpp).
+- Introduced versioning if the language supports it (currently
+  Perl and Tcl; the Java binding uses transparent shared library versioning).
+- Binds the TIFFlib and zlib libraries into the shared library for
+  the PDFlib scripting bindings, thereby making the TIFF and compression
+  features available to all SWIG bindings.
+- Improved the SWIG-generated documentation for the scripting APIs.
+- Introduced language-specific exception handling as offered by SWIG.
+  Exception handling for Java is done outside of SWIG.
+- Explicitly sets the "C" locale in order to avoid the Java VM messing up
+  our decimal separators by setting a bad locale.
+- Introduced a Visual Basic binding with a specialized DLL and a type
+  library.
+
+
+Other:
+
+- Restructured the distribution directory tree.
+- Streamlined the API for better scripting support.
+- Added a file which documents changes to the API.
+- Introduced versioning also at the API level and in the shared object naming.
+- Changed the error handler interface to a fixed string, as opposed to a
+  variable number of arguments.
+- Introduced error/exception classes which replace the former
+  error types, and are passed through to the scripting API.
+- Reworks and cuts down the AFM parser, and makes it re-entrant.
+- Installs NULL error and warning handlers in TIFFlib in order to
+  avoid messages from opening corrupt TIFF files. The caller will be
+  notified via the return code.
+- Introduced "const" for all char * arguments in the API.
+
+
+V1.0 (February 1999) (not publicly released)
+============================================
+
+No new featues, only bug fixes and improved platform support.
+
+Platform support:
+
+- Changed all library clients so that main() is declared with return
+  type int.
+- Many casts and other minor changes in order to get rid of
+  MS Visual C++ 6.0 warnings (*.c, *.h).
+- Included project and workspace files for MS Visual C++ 6.0 in the fileset
+  (PDFlib.dsp, PDFlib.dsw).
+- Removed Watcom makefile from the fileset (makefile.wat).
+- Switch to autoconf support (configure, configure.in, Makefile.in)
+- Added Mac build support and file type/creator entries (p_basic.c)
+
+
+Bug fixes:
+
+- Extended close routine (p_gif.c, p_jpeg.c)
+- Page height and width were exchanged in the interface of PDF_begin_page()
+  as well as in the manual. Funnily enough, the MediaBox was also written
+  with both in the wrong order, thereby correcting things. However, the
+  demo clients used the parameters in the intended order. This fix only
+  clarifies the meaning of width and height, but doesn't change th
+  behavior of clients.
+- PDF output file is no longer closed in the library in order to
+  be consistent with the opening in the client. This INCOMPATIBLE
+  change means that all library clients now must close the PDF output
+  file themselves!
+- Fixed a core dump bug in the TIFF handler (p_tiff.c)
+- Fixes bug where a font could get written to the PDF with wrong
+  encoding information.
+
+
+V0.7b2 (August 1998) (only for a single customer)
+=================================================
+
+New features:
+
+- Added CCITT support for passing through G3 or G4 compressed
+  bitmap data (p_ccitt.c, pdf.h).
+- Changes to the image interface (p_ccitt.c, p_jpeg.c, p_tiff.c,
+  p_gif.c, pdf.h)
+
+Bug fixes:
+
+- Changed the get_2bytes macro to a function since the macro
+  didn't guarantee the evaluation order, which lead to problems
+  when analyzing JPEGs on BeOS (p_jpeg.c).
+- Added a check for Acrobat-compatible page size (1"-45", or
+  72pt-3240pt) in PDF_begin_page(). This is necessary to work around
+  restrictions in Adobe's Acrobat implementation (p_basic.c).
+
+Minor enhancements:
+
+- Several makefile cleanups (makefile.gcc).
+
+
+V0.6 (08 July 1998)
+===================
+
+New features:
+
+- Added SWIG support, as suggested and basically implemented by
+  Rainer Schaaf (Rainer.Schaaf@T-Online.de). SWIG support allows us
+  to use PDFlib routines from Tcl, Perl, and Python.
+  (makefile, pdflib.i, pdftcl_wrap.c pdfperl_wrap.c, pdfpython_wrap.c,
+  pdflib.pm).
+- New directory structure: BINDINGS directory contains subdirectory
+  for several PDFlib language bindings. Currently these are
+  C, CGI, Perl, Tcl, Python (yes, I know that CGI is not a language).
+- Included scripting samples (BINDINGS/*/pdfclock.[pl|tcl|py],
+  BINDINGS/*/hello.[pl|tcl|py]).
+- Added new function PDF_setpolydash, suggested and implemented
+  by Evgeny Stambulchik <fnevgeny@plasma-gate.weizmann.ac.il>
+  (p_gstate.c, pdf.h).
+
+Bug fixes and minor enhancements:
+
+- Fix trivial (but fatal) free/fclose bug (p_font.c)
+- Slightly change syntax of pdfgraph sample program: fill and
+  stroke is denoted by 'F' instead of 'B' (pdfgraph.c)
+- Shorten the version string (pdf.h)
+- Add cast (p_basic.c)
+- Conditionally typedef bool because of conflicts in VC++ (pdf.h and p_port.h)
+- Add cast (p_font.c)
+- Delete old BOOL typedef (pdf.h)
+- Renamed function parseFile to pdf_parseFile in order to avoid name
+  clashes with other software packages. This change was requested
+  by Evgeny Stambulchik for the xmgr package. This package uses T1lib
+  which also includes a copy of Adobe's AFM parser. (afmparse.c,
+  afmparse.h, p_font.c).
+- Fixed typo in the Goethe demo text (pdfdemo.c).
+- Adjusted demo data to new setrgbcolor interface (test/graphdata).
+- Add PDF_HAS_BOOL define. However, it doesn't really fix the multiple 
+  boolean define/typedef/enum problem (p_port.h).
+- Removed const from PDF_info struct members. This change is related
+  to SWIG support, although the necessity of the change is not yet
+  fully understood (pdf.h).
+- Enhances the AFM parser to recognize AFM files according to the AFM 4.1
+  specification, especially the "CharWidth" keyword.
+
+
+V0.5 (25 February 98)
+=====================
+Portability aids, bug fixes and other improvements from several contributors:
+
+- JPEG images could be closed multiply (p_jpeg.c)
+- Introduce Mac and Win32 porting defs (p_port.h)
+- Use define for path separator which is needed for the Mac's ":"
+  (p_port.h, p_font.h)
+- Rename structure member private to private_data for C++ compatibility
+  (pdf.h, p_font.c, p_gif.c, p_jpeg.c, p_tiff.c)
+- NeXT portability: include libc.h (imagepdf.c, pdfclock.c, pdfgraph.c, 
+  text2pdf.c)
+- Don't use malloc.h (afmparse.c)
+- Change variable handling in make build process (makefile)
+- Fix bug in octal character representation (p_text.c)
+- Introduce word and character spacing functions (p_text.c)
+- Fix subtle bug in font embedding: fonts with additional data after
+  the zeros portion were not properly embedded (p_font.c)
+
+Environment bindings:
+- Introduces BINDINGS directory which will collect several language and
+  environment bindings for PDFlib.
+- Sample CGI script for the PDFclock example (BINDINGS/CGI/clock.cgi)
+
+Several bugfixes, due to Detlev Droege's comments after
+testing with his PDFviewer:
+
+- Avoid empty /Filter arrays for uncompressed binary images (p_image.c).
+- Change erroneous number of color components in demo page (pdfdemo.c).
+- Implement consistency check for color components vs. color space
+  (p_image.c)
+- Write binary magic number for all files (ASCII and binary) (p_basic.c).
+- Change "Producer" to "Creator" in sample application (hello.c).
+- AFM handler crashed in case the AFM parser gave up on certain AFMs (p_font.c).
+- AFM parser didn't correctly handle newer version 4.0 AFMs (afmparse.c).
+- Use AFM 4.0 key "StdVW" for a more accurate /StemV in font descriptor 
+  (p_font.c).
+- API CHANGE: Change RGB parameters from byte to float since
+  gray values are float parameters too (p_color.c).
+
+
+V0.4 (8 September 97)
+=====================
+First public release.
+
+- Generating multiple PDFs with embedded images resulted in wrong
+  XObject numbers for the second and following PDFs. Use image_number
+  from the PDF structure instead of a static variable.
+  (p_image.c, p_basic.c)
+- Makefile for Watcom C 10.6 included in the distribution, support
+  Windows build (makefile.wat).

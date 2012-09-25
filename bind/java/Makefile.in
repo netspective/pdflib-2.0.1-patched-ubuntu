@@ -1,0 +1,83 @@
+# Makefile for PDFlib
+
+VERSION = @VERSION@
+
+SHELL = @SHELL@
+INSTALL = @INSTALL@
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+EXE	= @EXE@
+OBJ	= @OBJ@
+AR	= @AR@
+CC	= @CC@
+RM      = @RM@
+SO	= @SO@
+RANLIB	= @RANLIB@
+
+# installation directories
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+# position independent code for shared libraries
+LDSHARED = @LDSHARED@
+
+PDFLIB = @PDFLIB@
+PDFLIBLINK = -L../../pdflib @PDFLIBLINK@
+CFLAGS = -c @DEFS@ @CCSHARED@ -I../../pdflib
+
+.SUFFIXES: .c
+
+.c.o:
+	$(CC) $(CFLAGS) $(DEFINES) $<
+
+# Language-dependent definitions
+LANG_INCDIR	= @JAVAINCLUDE@
+LANG_LIBDIR 	= @libdir@
+
+# Java support requires swig1.2
+SWIG		= swig1.2
+SWIG_LIB	= libpdf_java@VERSION@$(SO)
+SWIG_OBJ	= pdflib_java.$(OBJ)
+SWIG_SRC	= pdflib_java.c
+SWIG_DOC	= pdflib_java.doc
+SWIG_EXTRA	= pdflib.java
+SWIGFLAGS	= -I../../pdflib -java -d pdflib_java -stat
+
+all:	$(SWIG_LIB)
+
+PDFLIB_I	= ../../pdflib/pdflib.i
+
+# The swig-generated wrapper file
+$(SWIG_SRC): $(PDFLIB_I) ../../pdflib/pdflib.h
+	$(SWIG) $(SWIGFLAGS) -o $@ $(PDFLIB_I)
+
+$(SWIG_OBJ):	$(SWIG_SRC)
+	$(CC) $(CFLAGS) $(SWIG_SRC) $(LANG_INCDIR) $(DEFINES) $<
+
+# The actual shared library for the language support
+$(SWIG_LIB): ../../pdflib/$(PDFLIB) $(SWIG_OBJ)
+	$(RM) $(SWIG_LIB)
+	$(LDSHARED) $(SWIG_OBJ) -o $(SWIG_LIB) $(PDFLIBLINK)
+
+test: all
+	-javac hello.java && LD_LIBRARY_PATH=../../pdflib:. java hello
+	-javac pdfclock.java && LD_LIBRARY_PATH=../../pdflib:. java pdfclock
+
+install: $(SWIG_LIB)
+	-$(INSTALL) $(SWIG_EXTRA) $(LANG_LIBDIR)
+	-$(INSTALL) $(SWIG_LIB) $(LANG_LIBDIR)
+	-cd $(LANG_LIBDIR); ln -s $(SWIG_LIB) libpdf_java$(SO)
+	-echo "Make sure to have your CLASSPATH point to pdflib.class"
+
+uninstall:
+	-$(RM) $(LANG_LIBDIR)/$(SWIG_LIB) $(LANG_LIBDIR)/$(SWIG_EXTRA)
+
+clean:
+	-$(RM) $(SWIG_LIB) $(SWIG_OBJ)
+	-$(RM) hello_java.pdf pdfclock_java.pdf
+	-$(RM) pdflib.class hello.class pdfclock.class
+
+maintainer-clean: clean
+	-$(RM) $(SWIG_SRC) $(SWIG_DOC) $(SWIG_EXTRA)

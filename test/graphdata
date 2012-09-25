@@ -1,0 +1,71 @@
+% Sample control file for pdfgraph
+%
+% Available commands and their meaning:
+% M x y		x y moveto
+% L x y		x y lineto
+% S		stroke
+% f		fill
+% F		fill and stroke
+% g level	level setgray
+% C r g b	r g b setrgbcolor
+% %		comment (to end of line)
+
+
+% red
+C 1.0 0 0
+M 100 100
+L 110 150
+L 120 200
+L 130 30
+L 140 180
+L 150 240
+L 160 260
+L 170 270
+L 180 320
+L 190 350
+
+L 200 400
+L 210 450
+L 220 460
+L 230 420
+L 240 430
+L 250 450
+L 260 470
+L 270 450
+L 280 500
+L 290 500
+
+L 300 510
+L 310 510
+L 320 480
+L 330 480
+L 340 490
+L 350 520
+L 360 525
+L 370 523.25
+L 380 525
+L 390 530
+
+L 400 540
+L 410 535
+L 420 540
+L 430 550
+L 440 600
+L 450 580
+L 460 620
+L 470 630
+L 480 620
+L 490 630
+
+L 500 700
+L 510 710
+L 520 720
+L 530 680
+L 540 670
+L 550 630
+L 560 750
+L 570 760
+L 580 760
+L 590 760
+
+S
