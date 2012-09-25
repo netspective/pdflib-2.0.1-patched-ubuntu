@@ -1,0 +1,127 @@
+API changes
+===========
+
+This file documents those API changes which affect
+existing PDFlib client programs. Although I go to
+some efforts in maintaining the existing API functions,
+it is sometimes necessary to incorporate a few non-backward
+compatible changes in order to streamline the API and
+incorporate new or extended functions.
+
+API changes in PDFlib V2.01
+===========================
+- PDF_place_inline_image() is no longer supported; use PDF_place_image()
+  instead (same interface):
+  Change
+    PDF_place_inline_image()
+    -- to --
+    PDF_place_image()
+
+- PDF_put_image() is no longer required. Instead, the image data is
+  "parked" immediately on PDF_open_*():
+  Delete
+    PDF_put_image()
+
+- PDF_execute_image() is no longer required. Instead, PDF_place_image()
+  can be called multiple times for a given PDF:
+  Change
+    PDF_execute_image()
+    -- to --
+    PDF_place_image()
+
+- The interface and functionality of PDF_open_memory_image() changed:
+  Change
+    int PDF_open_memory_image(PDF *p, unsigned char *buffer,
+		int width, int height, int components, int bpc);
+    -- to --
+    int PDF_open_image(PDF *p, "raw", "memory", const char *data, long len,
+		int width, int height, int components, int bpc, NULL);
+
+
+API changes in PDFlib V2.0
+==========================
+
+- All API functions with parameters of type "char *" changed to "const char *".
+
+- change
+    PDF_data_source_from_buf()
+    -- to --
+    int PDF_open_memory_image(PDF *p, unsigned char *buffer,
+    	int width, int height, int components, int bpc)
+- change
+    PDF_set_text_matrix(PDF *p, PDF_matrix m);
+    -- to --
+    void PDF_set_text_matrix(PDF *p,
+    	float a, float b, float c, float d, float e, float f);
+
+- change
+    PDF_add_outline(p, text);
+    -- to --
+    PDF_add_bookmark(p, text, -1, 0);
+
+- change
+    PDF_info *PDF_get_info(void);
+    -- to --
+    PDF_set_info(PDF *p, char *key, char *value);
+    (after PDF_new() and PDF_open_*())
+
+- change
+    PDF_image->width and PDF_image->height
+    -- to --
+    PDF_get_image_width(PDF *p, PDF_image *image)
+    -- and --
+    PDF_get_image_height(PDF *p, PDF_image *image);
+
+- change
+    PDF_info->error_handler = handler;
+    -- to --
+    PDF_new2(handler, ...);
+    Watch out for the changed signature of the error handler.
+
+- change
+    void PDF_data_source_from_buf(*p, *src, buffer, len);
+    -- to --
+    PDF_image *PDF_open_memory_image(p, buffer, width, height, components, bpc);
+    void PDF_close_image(p, image);
+
+- change
+    a4.width to a4_width etc.
+
+- change
+    PDF_image image; /* for PDF_open_[GIF|JPEG|TIFF|memory_image] */
+    -- to --
+    int image;
+
+- change
+    PDF_close_[GIF|JPEG|TIFF|memory_image];
+    -- to --
+    PDF_close_image();
+
+- change
+    PDF_transition(p, type);
+    -- to --
+    PDF_transition(p, "type");
+
+- change
+    PDF_set_font(p, fontname, size, encoding);
+    -- to  --
+    int PDF_findfont(p, fontname, encoding, embed);
+    if (font == -1)
+	/* handle unavailable font */
+    PDF_setfont(p, font, size);
+
+    Note: the old PDF_set_font() is still available for compatibility.
+
+- change
+    PDF_stringwidth(char *text);
+    -- to --
+    PDF_stringwidth(text, PDF_get_font(p), PDF_get_fontsize(p));
+
+- change
+    PDF_open(filename);
+    -- to --
+    p = PDF_new();
+    if (PDF_open_file(filename) == -1) { ... }
+    -- or --
+    p = PDF_new();
+    if (PDF_open_fp(fp) == -1) { ... }

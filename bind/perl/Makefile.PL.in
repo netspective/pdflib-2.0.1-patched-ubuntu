@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+# Makefile.PL
+# Copyright (C) 1997-99 Thomas Merz. All rights reserved.
+#
+# Input for generating a Perl binding for PDFlib with MakeMaker
+
+use ExtUtils::MakeMaker;
+
+WriteMakefile(
+'CCFLAGS' => '',
+'DEFINE' => '@PERLBOOLDEF@ @DEFINES@ @CCSHARED@',
+'INC' => '-I../../pdflib @PERLINCLUDE@',
+'LIBS' => '-L../../pdflib @PDFLIBLINK@ @PERLLINK@',
+'NAME' => 'pdflib',
+'OBJECT' => 'pdflib_pl.o',
+'PM' => {'pdflib.pm' => '$(INST_LIBDIR)/pdflib.pm'},
+'VERSION' => '@VERSION@',
+);

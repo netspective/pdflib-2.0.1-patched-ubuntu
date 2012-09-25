@@ -1,0 +1,79 @@
+# Makefile for PDFlib
+
+VERSION = @VERSION@
+
+SHELL = @SHELL@
+INSTALL = @INSTALL@
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+PDFLIB = ../pdflib/@PDFLIB@
+LIBS	= @PDFLIBLINK@
+
+EXE	= @EXE@
+OBJ	= @OBJ@
+AR	= @AR@
+CXX	= @CXX@
+RM      = @RM@
+SO	= @SO@
+RANLIB	= @RANLIB@
+
+# installation directories
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+PDFLIB = @PDFLIB@
+CXXFLAGS = -c @DEFS@ @CCSHARED@ -I../../pdflib
+LDFLAGS = -L../../pdflib
+
+.SUFFIXES: .cpp
+
+.cpp.o:
+	$(CXX) $(CXXFLAGS) $(DEFINES) $<
+
+# ----------------------------------
+
+SRC	= \
+	$(srcdir)/pdflib.cpp	\
+	$(srcdir)/hello.cpp	\
+	$(srcdir)/pdfclock.cpp
+
+OBJS	= \
+	$(srcdir)/pdflib.o	\
+	$(srcdir)/hello.o	\
+	$(srcdir)/pdfclock.o
+
+all:	pdflib.o hello$(EXE) pdfclock$(EXE)
+
+test: hello$(EXE) pdfclock$(EXE)
+	LD_LIBRARY_PATH=../../pdflib ./hello
+	LD_LIBRARY_PATH=../../pdflib ./pdfclock
+
+pdflib.o: pdflib.cpp
+
+pdfclock$(EXE): pdfclock.o pdflib.o ../../pdflib/$(PDFLIB)
+	$(CXX) $(LDFLAGS) -o $@ pdfclock.$(OBJ) pdflib.o $(LIBS)
+
+hello$(EXE): hello.o pdflib.o ../../pdflib/$(PDFLIB)
+	$(CXX) $(LDFLAGS) -o $@ hello.$(OBJ) pdflib.o $(LIBS)
+
+install: 
+
+uninstall:
+
+clean:
+	-$(RM) $(OBJS) hello$(EXE) pdfclock$(EXE) hello_cpp.pdf pdfclock_cpp.pdf
+
+maintainer-clean: clean
+	-$(RM) Makefile.in.bak
+
+depend:
+	cp Makefile.in Makefile.in.bak
+	sed '/^# Automatically generated dependencies/q' Makefile.in.bak >Makefile.in
+	$(CXX) $(CXXFLAGS) -MM $(SRC)>>Makefile.in
+
+# Automatically generated dependencies
+pdflib.o: ./pdflib.cpp pdflib.hpp ../../pdflib/pdflib.h
+hello.o: ./hello.cpp pdflib.hpp ../../pdflib/pdflib.h
+pdfclock.o: ./pdfclock.cpp pdflib.hpp ../../pdflib/pdflib.h

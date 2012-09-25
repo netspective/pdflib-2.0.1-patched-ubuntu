@@ -1,0 +1,70 @@
+PS-Resources-1.0
+
+% This is a sample UPR file for use with PDFlib.
+% It describes the 14 PDF core fonts (only AFM metrics, no font outline files),
+% and an additional sample font (with AFM metrics and font outline file).
+% Please note that this UPR file and the AFM files are only
+% necessary if you want to use fonts with non-native encodings, i.e.,
+% Mac encoding on a Unix or Windows system, or WinAnsi encoding on
+% the Mac.
+
+% A description of the UPR file format can be found in the PDFlib
+% manual.
+
+% UPR files can be generated from several kinds of resources
+% with the makepsres utility. It is available freely on the net.
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The first section declares the resources described in this file.
+% It will have to be changed only rarely.
+% The keywords given here start the later sections. A single '.' on
+% a line closes a section.
+
+FontAFM
+FontOutline
+.
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The path entry is a shortcut to the resource files. It will be
+% prepended to all resource file names. Adjust as necessary.
+% Note that the first slash is required by UPR syntax, the rest
+% of the line contains the path (relative to the respective program).
+% The line should _not_ end with a directory separator. On the Mac,
+% of course, you will have to put colons ':' as directory separators.
+%
+% Important: you will either have to adjust the font path (and remove the
+% percent character at the beginning) in this line, or add appropriate
+% path names to all file names in the rest of this file.
+
+%//home/tm/SRC/pdflib/fonts
+
+% The AFM font metrics section, one line per font in the format
+% <fontname>=<filename>
+
+FontAFM
+Courier=Courier.afm
+Courier-Bold=Courier-Bold.afm
+Courier-BoldOblique=Courier-BoldOblique.afm
+Courier-Oblique=Courier-Oblique.afm
+Helvetica=Helvetica.afm
+Helvetica-Bold=Helvetica-Bold.afm
+Helvetica-BoldOblique=Helvetica-BoldOblique.afm
+Helvetica-Oblique=Helvetica-Oblique.afm
+Symbol=Symbol.afm
+Times-Bold=Times-Bold.afm
+Times-BoldItalic=Times-BoldItalic.afm
+Times-Italic=Times-Italic.afm
+Times-Roman=Times-Roman.afm
+ZapfDingbats=ZapfDingbats.afm
+.
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The Font outline section, one line per font in the format
+% <fontname>=<filename>
+
+FontOutline
+Code-128=Code_128.pfa
+.

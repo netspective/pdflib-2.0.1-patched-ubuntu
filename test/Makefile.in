@@ -1,0 +1,55 @@
+# Makefile for PDFlib tests
+
+VERSION = @VERSION@
+
+SHELL = @SHELL@
+
+srcdir	= @srcdir@
+VPATH	= @srcdir@
+
+PDFLIB	= @PDFLIB@
+LIBS	= -L../pdflib @PDFLIBLINK@
+
+EXE	= @EXE@
+OBJ	= @OBJ@
+AR	= @AR@
+CC	= @CC@
+RM      = @RM@
+
+CFLAGS	= -c @DEFS@ @DEFINES@ -I../pdflib
+LDFLAGS = 
+
+.SUFFIXES: .c
+
+.c.o:
+	$(CC) $(CFLAGS) $(DEFINES) $<
+
+# ------------------------------
+
+SRC	= \
+	$(srcdir)/pdftest.c
+
+OBJS	= \
+	$(srcdir)/pdftest.$(OBJ)
+
+all:	pdftest$(EXE)
+
+test: pdftest$(EXE) 
+	LD_LIBRARY_PATH=../pdflib ./pdftest
+
+pdftest$(EXE): $(OBJS) ../pdflib/$(PDFLIB)
+	$(CC) $(LDFLAGS) -o $@ pdftest.$(OBJ) $(LIBS)
+
+clean:
+	-$(RM) pdftest$(EXE) pdftest*.pdf $(OBJS)
+
+maintainer-clean: clean
+	-$(RM) Makefile.in.bak
+
+depend:
+	cp Makefile.in Makefile.in.bak
+	sed '/^# Automatically generated dependencies/q' Makefile.in.bak >Makefile.in
+	$(CC) $(CFLAGS) -MM $(SRC)>>Makefile.in
+
+# Automatically generated dependencies
+pdftest.o: ./pdftest.c ../pdflib/pdflib.h

@@ -1,0 +1,737 @@
+dnl Configure.in script for PDFlib.
+dnl Process this file with autoconf to produce a configure script.
+
+dnl source directory sanity check using an arbitrary source file
+AC_INIT(pdflib/p_basic.c)
+
+VERSION="2.01"
+
+WITH_CXX=nope
+WITH_JAVA=nope
+WITH_PERL=nope
+WITH_PYTHON=nope
+WITH_TCL=nope
+
+dnl install-sh will be searched (and found) here
+AC_CONFIG_AUX_DIR(util)
+
+# Set name for machine-dependent library files
+AC_SUBST(MACHDEP)
+AC_MSG_CHECKING(MACHDEP)
+if test -z "$MACHDEP"
+then
+	if test -f /usr/lib/NextStep/software_version; then
+		set X `hostinfo | grep 'NeXT Mach.*:' | \
+			sed -e 's/://' -e 's/\./_/'` && \
+		ac_sys_system=next && ac_sys_release=$4
+		MACHDEP="$ac_sys_system$ac_sys_release$ac_sys_cpu"
+	else
+		ac_sys_system=`uname -s`
+		if test "$ac_sys_system" = "AIX" ; then
+			ac_sys_release=`uname -v`
+		else
+			ac_sys_release=`uname -r`
+		fi
+		ac_md_system=`echo $ac_sys_system |
+				   tr -d '[/ ]' | tr '[[A-Z]]' '[[a-z]]'`
+		ac_md_release=`echo $ac_sys_release |
+				   tr -d '[/ ]' | sed 's/\..*//'`
+		MACHDEP="$ac_md_system$ac_md_release"
+	fi
+	case MACHDEP in
+	'')	MACHDEP=unknown;;
+	esac
+fi
+AC_MSG_RESULT($MACHDEP)
+
+# Default defines -- some systems may need special handling here
+
+case $ac_sys_system/$ac_sys_release in
+    cyg*|CYG*) DEFINES="-U_WIN32 -UWIN32 -U__WIN32__ -U_Windows";;
+    *)	DEFINES="";;
+esac
+
+# ---------- Checks for programs.
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+
+# ---------- deselect C++ option
+WITH_CXX="yes"
+AC_ARG_WITH(cxx,[  --without-cxx               Disable C++ test program],
+    [WITH_CXX="no"],
+    [WITH_CXX="yes"])
+
+if test "$WITH_CXX" = "yes"; then
+    AC_PROG_CXX
+    AC_SUBST(CXX)
+fi
+
+# common stuff, unlikely to be changed
+SHELL="/bin/sh"
+
+# EXE must include the dot if used
+case $ac_sys_system/$ac_sys_release in
+    cyg*|CYG*) EXE=".exe";;
+    *)	EXE="";;
+esac
+
+# OBJ must _not_ include the dot
+OBJ="o"
+AR="ar rc"
+RM="rm -f"
+
+AC_SUBST(SHELL)
+AC_SUBST(EXE)
+AC_SUBST(OBJ)
+AC_SUBST(AR)
+AC_SUBST(VERSION)
+AC_SUBST(CC)
+AC_SUBST(RM)
+
+# ---------- Checks for libraries.
+
+# This borrowed from the Python configuration file
+# Set info about shared libraries.
+
+AC_SUBST(SO)
+AC_SUBST(LDSHARED)
+AC_SUBST(CCSHARED)
+AC_SUBST(LINKFORSHARED)
+
+# SO is the extension of shared libraries `(including the dot!)
+# -- usually .so, .sl on HP-UX
+
+AC_MSG_CHECKING(SO)
+if test -z "$SO"
+then
+	case $ac_sys_system/$ac_sys_release in
+	hp*|HP*) SO=.sl;;
+	NeXT/3*|next/3*) SO=.a;; # no shared libs on NeXT 3.3 and less
+	cyg*|CYG*) SO=.dll;;
+	*)	SO=.so;;
+	esac
+fi
+AC_MSG_RESULT($SO)
+# LDSHARED is the ld *command* used to create shared library
+# -- "ld" on SunOS 4.x.x, "ld -G" on SunOS 5.x, "ld -shared" on IRIX 5
+AC_MSG_CHECKING(LDSHARED)
+if test -z "$LDSHARED"
+then
+	case $ac_sys_system/$ac_sys_release in
+	AIX*) LDSHARED="ld_so_aix";;
+	IRIX*) LDSHARED="ld -shared";;
+	SunOS/4*) LDSHARED="ld";;
+	SunOS/5*) LDSHARED="ld -G";;
+	hp*|HP*) LDSHARED="ld -b";;
+	OSF*) LDSHARED="ld -shared -expect_unresolved \"*\"";;
+	DYNIX/ptx*) LDSHARED="ld -G";;
+	Linux*) LDSHARED="gcc -shared";;
+	FreeBSD*) LDSHARED="ld -Bshareable";;
+	NetBSD*) LDSHARED="ld -Bshareable -Bdynamic -x";;
+	NeXT|next/3*) LDSHARED="ld -u libsys_s";;
+	NeXT|next/4*) LDSHARED="cc -nostdlib -r ";;
+	SCO_SV*) LDSHARED="ld -G";;
+	cyg*|CYG*) LDSHARED="dllwrap --export-all --driver-name gcc --output-def libpdf$VERSION.def --implib libpdf$VERSION.a ";;
+	*)	LDSHARED="ld";;
+	esac
+fi
+AC_MSG_RESULT($LDSHARED)
+
+# CCSHARED are the C *flags* used to create objects to go into a shared
+# library -- this is only needed for a few systems
+AC_MSG_CHECKING(CCSHARED)
+if test -z "$CCSHARED"
+then
+	case $ac_sys_system in
+	hp*|HP*) if test "$GCC" = yes;
+		 then CCSHARED="-fpic";
+		 else CCSHARED="+z";
+		 fi;;
+	Linux*) CCSHARED="-fpic";;
+	SCO_SV*) CCSHARED="-Kpic -belf";;
+	FreeBSD*) CCSHARED="-fpic";;
+	NetBSD*) CCSHARED="-fpic";;
+	cyg*|CYG*) CCSHARED="-DBUILDING_DLL=1";;
+	esac
+fi
+AC_MSG_RESULT($CCSHARED)
+
+# ---------- select debugging configuration
+WITH_DEBUG="no"
+AC_ARG_WITH(debug,[  --with-debug                Enable debugging configuration (implies static)],[WITH_DEBUG="yes"], [WITH_DEBUG="no"])
+
+# ---------- select static library (shared is default for most systems)
+# Filter systems which don't support shared libraries
+case $ac_sys_system/$ac_sys_release in
+	NeXT|next/3*) WITH_STATIC="no";;
+	*)	WITH_STATIC="yes";;
+esac
+
+AC_ARG_WITH(static,[  --with-static               Enable building the static library],[WITH_STATIC="yes"], [WITH_STATIC="no"])
+
+# LINKFORSHARED are the flags passed to the $(CC) command that links
+# the executables -- this is only needed for a few systems
+
+AC_MSG_CHECKING(LINKFORSHARED)
+if test -z "$LINKFORSHARED"
+then
+	case $ac_sys_system/$ac_sys_release in
+	AIX*)	LINKFORSHARED='-Wl,-bE:$(srcdir)/python.exp -lld';;
+	hp*|HP*)
+	    LINKFORSHARED="-Wl,-E -Wl,+s -Wl,+b\$(BINLIBDEST)/lib-dynload";;
+	Linux*) LINKFORSHARED="-Xlinker -export-dynamic";;
+	next/3*) LINKFORSHARED="-u libsys_s";;
+	SCO_SV*) LINKFORSHARED="-Bdynamic -dy -Wl,-Bexport";;
+	IRIX*/6*) LINKFORSHARED="-all";;
+	esac
+fi
+AC_MSG_RESULT($LINKFORSHARED)
+
+# ---------- Checks for header files.
+
+# The following tests for Tcl, Python, and Perl are taken from
+# the SWIG configure.in file, which in turns borrows some tests
+# from the Python configuration.
+
+echo ""
+echo "Checking for installed languages."
+echo "Note: none of the following packages are required to build PDFlib"
+echo ""
+
+#--------------------------------------------------------------------
+#	Take care of C++
+#--------------------------------------------------------------------
+
+# Filter out systems where we don't build the C++ binding
+# Quote Detlev Droege: "C++ doesn't work with a real object-oriented
+# system such as NeXTStep"
+
+case $ac_sys_system/$ac_sys_release in
+	NeXT|next/3*) WITH_CXX="no";;
+	NeXT|next/4*) WITH_CXX="no";;
+	*)	WITH_CXX="yes";;
+esac
+
+#--------------------------------------------------------------------
+#	Try to locate the Java Developers Kit for JNI
+#--------------------------------------------------------------------
+
+JAVAINCLUDE=nope
+
+AC_ARG_WITH(java,[  --with-java=path            Set location of Java Developers Kit],[
+	JAVAPACKAGE="$withval"], [JAVAPACKAGE=nope])
+
+if test "$JAVAINCLUDE" = nope; then
+   if test "$JAVAPACKAGE" != nope; then
+	JAVAINCLUDE="-I$JAVAPACKAGE/include"
+   fi
+fi
+
+AC_MSG_CHECKING(for Java header files)
+if test "$JAVAINCLUDE" = nope; then
+AC_TRY_CPP([#include <jni.h>], , JAVAINCLUDE="nope")
+if test "$JAVAINCLUDE" = nope; then
+	dirs="$prefix /usr/lib/java /usr/java /usr/local/java /usr/lib/jdk1.2.1 /usr/lib/jdk1.1.8 /usr/lib/jdk1.1.7 /usr/lib/jdk1.1.6 /usr/lib/jdk1.1.5 /usr/lib/jdk1.1.4 /usr/lib/jdk1.1.3 /usr/local/jdk1.1.2 /usr/local/jdk1.1.1 /usr /opt/local"
+	for i in $dirs ; do
+		if test -r $i/include/jni.h; then
+			AC_MSG_RESULT($i/include)
+			JAVAINCLUDE="-I$i/include"
+			break
+		fi
+	done
+fi
+if test "$JAVAINCLUDE" = nope; then
+	JAVAINCLUDE="-I/usr/local/include"
+    	AC_MSG_RESULT(not found)
+else
+	WITH_JAVA="yes"
+	if test -r $JAVAINCLUDE/$MACHDEP/jni_md.h; then
+	    JAVAINCLUDE="$JAVAINCLUDE $JAVAINCLUDE/$MACHDEP"
+	else
+	    JAVAINCLUDE="$JAVAINCLUDE $JAVAINCLUDE/genunix"
+	fi
+fi
+else
+        AC_MSG_RESULT($JAVAINCLUDE)
+fi
+
+AC_SUBST(JAVAINCLUDE)
+
+#--------------------------------------------------------------------
+#	Try to locate the Tcl package
+#--------------------------------------------------------------------
+
+TCLINCLUDE=nope
+TCLPACKAGEDIR=nope
+TCLBIN=nope
+
+AC_ARG_WITH(tcl,[  --with-tcl=path             Set location of Tcl executable],[TCLBIN="$withval"],[TCLBIN=nope])
+
+AC_ARG_WITH(tclpkg,[  --with-tclpkg=path          Set location of Tcl package install directory],[TCLPACKAGEDIR="$withval"],[TCLPACKAGEDIR=nope])
+
+AC_ARG_WITH(tclincl,[  --with-tclincl=path         Set location of Tcl include directory],[TCLINCLUDE="-I$withval"],[TCLINCLUDE=nope])
+
+AC_MSG_CHECKING(for Tcl header files)
+if test "$TCLINCLUDE" = nope; then
+AC_TRY_CPP([#include <tcl.h>], , TCLINCLUDE="nope")
+if test "$TCLINCLUDE" = nope; then
+	dirs="$prefix/include /usr/local/include /usr/include /opt/local/include /home/sci/local/include /usr/pkg/include"
+	for i in $dirs ; do
+		if test -r $i/tcl.h; then
+			AC_MSG_RESULT($i)
+			TCLINCLUDE="-I$i"
+			break
+		fi
+	done
+fi
+if test "$TCLINCLUDE" = nope; then
+	TCLINCLUDE="-I/usr/local/include"
+    	AC_MSG_RESULT(not found)
+else
+	WITH_TCL="yes"
+fi
+else
+        AC_MSG_RESULT($TCLINCLUDE)
+fi
+
+if test "$TCLPACKAGEDIR" = nope; then
+    # Package support started in tcl 7.5
+    if test "$TCLBIN" = nope; then
+	AC_CHECK_PROGS(TCL, tclsh8.1 tclsh8.0 tclsh7.6 tclsh7.5 tclsh,nope)
+	TCLBIN=$TCL
+    fi
+
+    
+    if test "$TCLBIN" != nope; then
+	# Check the installed Tcl version -- must be 7.5 or higher
+	TCLVERSION=`echo "puts [[info tclversion]]" | $TCLBIN`
+	if test "$TCLVERSION" = "7.4" -o "$TCLVERSION" = "7.3" -o "$TCLVERSION" = "7.2" -o "$TCLVERSION" = "7.1" -o "$TCLVERSION" = "7.0"; then
+	    echo "-------- This Tcl version doesn't support loadable packages." 
+	    echo "-------- PDFlib support for Tcl will not be built."
+	    WITH_TCL=nope
+	else
+	
+	    # Let tcl decide where to install the package
+	    TCLPACKAGEDIR=`(echo "puts \\$auto_path" | $TCLBIN | awk '{print $1}') 2>/dev/null`
+	fi
+    fi
+    if test "$WITH_TCL" != nope; then
+	if test "$TCLPACKAGEDIR" = nope -o -z "$TCLPACKAGEDIR" -o ! -d "$TCLPACKAGEDIR"; then
+	    AC_MSG_RESULT(unable to determine Tcl package directory)
+	    TCLPACKAGEDIR=/usr/lib/tcl
+	fi
+    fi
+fi
+
+TCLPACKAGEDIR=$TCLPACKAGEDIR/pdflib
+
+AC_SUBST(TCLINCLUDE)
+AC_SUBST(TCLPACKAGEDIR)
+AC_SUBST(TCLBIN)
+
+#----------------------------------------------------------------
+# Look for Python
+#----------------------------------------------------------------
+
+PYINCLUDE=nope
+PYPACKAGE=nope
+
+AC_ARG_WITH(py,[  --with-py=path              Set location of Python root directory],[
+	PYPACKAGE="$withval"], [PYPACKAGE=nope])
+AC_ARG_WITH(pyincl,[  --with-pyincl=path          Set location of Python include directory],[
+	PYINCLUDE="$withval"], [PYINCLUDE=nope])
+
+if test "$PYINCLUDE" = nope; then
+   if test "$PYPACKAGE" != nope; then
+	PYINCLUDE="$PYPACKAGE/include"
+   fi
+fi
+
+AC_MSG_CHECKING(for Python header files)
+
+dirs="$PYINCLUDE $PYINCLUDE/python1.5 $PYINCLUDE/python1.4 $PYINCLUDE/Py $prefix/include/python1.5 $prefix/include/python1.4 /usr/local/include/python1.5 /usr/include/python1.5 /usr/local/include/python1.4 /usr/include/python1.4 $prefix/include/Py /usr/local/include/Py /usr/include/Py /usr/pkg/include"
+for i in $dirs ; do
+	if test -r $i/Python.h; then
+		AC_MSG_RESULT($i)
+		PYINCLUDE="-I$i"
+		break
+	fi
+done
+if test "$PYINCLUDE" = nope; then
+	PYINCLUDE="-I/usr/local/include/Py"
+    	AC_MSG_RESULT(not found)
+else
+    WITH_PYTHON=yes
+fi
+
+AC_SUBST(PYINCLUDE)
+
+#----------------------------------------------------------------
+# Look for Perl5
+#----------------------------------------------------------------
+
+PERLBIN=nope
+PERLINCLUDE=nope
+
+AC_ARG_WITH(perl5,[  --with-perl5=path           Set location of Perl5 executable],[PERLBIN="$withval"],[PERLBIN=nope])
+AC_ARG_WITH(perlincl,[  --with-perlincl=path        Set location of Perl include directory],[PERLINCLUDE="-I$withval"],[PERLINCLUDE=nope])
+
+# First figure out what the name of Perl5 is
+
+if test "$PERLBIN" = nope; then
+AC_CHECK_PROGS(PERL, perl perl5.005 perl5.004 perl5.003 perl5.002 perl5.001 perl5,nope)
+else
+PERL="$PERLBIN"
+fi
+AC_MSG_CHECKING(for Perl5 files)
+if test "$PERL" != nope; then
+	PERL5DIR=`($PERL -e 'use Config; print $Config{archlib};') 2>/dev/null`
+	if test "$PERL5DIR" != ""; then
+		if test "$PERLINCLUDE" = nope; then
+		    dirs="$PERL5DIR $PERL5DIR/CORE"
+		    for i in $dirs; do
+			    if test -r $i/perl.h; then
+				    AC_MSG_RESULT($i)
+				    PERLINCLUDE="-I$i"
+				    break;
+			    fi
+		    done	
+		else
+		    AC_MSG_RESULT($PERLINCLUDE)
+		fi
+		if test "$PERLINCLUDE" = nope; then
+			PERLINCLUDE="-I$PERL5DIR/CORE"
+			AC_MSG_RESULT(could not locate perl.h...using $PERLINCLUDE)
+		else
+		    WITH_PERL=yes
+		fi	
+	else
+		AC_MSG_RESULT(unable to determine perl5 configuration)
+		PERLINCLUDE="-I$PERL5DIR"
+	fi
+	PERLLIBDIR=`($PERL -e 'use Config; print $Config{sitearchexp};') 2>/dev/null`
+	if test -z "$PERLLIBDIR" -o ! -d "$PERLLIBDIR"; then
+		AC_MSG_RESULT(unable to determine perl5 shared library directory)
+		PERLIB="/usr/lib/perl5/site_perl/5.005/archname"
+	fi
+	PERLMODDIR=`($PERL -e 'use Config; print $Config{sitelib};') 2>/dev/null`
+	if test -z "$PERLMODDIR" -o ! -d "$PERLMODDIR"; then
+		AC_MSG_RESULT(unable to determine perl5 module directory)
+		PERLMODDIR="/usr/lib/perl5/site_perl/5.005"
+	fi
+    else
+       	AC_MSG_RESULT(could not figure out how to run perl5)
+	PERLINCLUDE="-I/usr/local/lib/perl/archname/5.005/CORE"
+    fi
+
+# The Perl include files contain special handling for the bool type
+# on NeXT (sigh). We'll run into trouble if we don't work around this.
+
+case $ac_sys_system in
+	NeXT|next) PERLBOOLDEF="";;
+	*)	PERLBOOLDEF="-Dbool=char -DHAS_BOOL";;
+esac
+
+# Cygwin seems to ask for linking the perl library directly.
+# We use $PERLINCLUDE for this since it both contains the Perl library
+# _and_ the include files. Other systems don't explicitly link the
+# Perl library, so we keep PERLLINK empty.
+
+case $ac_sys_system/$ac_sys_release in
+    cyg*|CYG*) PERLLINK="-L$PERLINCLUDE -lperl";;
+    *)	PERLLINK="";;
+esac
+
+AC_SUBST(PERLINCLUDE)
+AC_SUBST(PERLLIBDIR)
+AC_SUBST(PERLMODDIR)
+AC_SUBST(PERLBOOLDEF)
+AC_SUBST(PERLLINK)
+
+#----------------------------------------------------------------
+# Look for TIFFlib
+#----------------------------------------------------------------
+TIFFINC=nope
+TIFFLIB=nope
+TIFFLINK=nope
+TIFF=nope
+
+AC_ARG_WITH(tiff,[  --with-tiff=path            Set location of TIFF root directory],[TIFF="$withval"], [TIFF=nope])
+AC_ARG_WITH(tiffincl,[  --with-tiffincl=path        Set location of TIFF include directory],[TIFFINC="$withval"], [TIFFINC=nope])
+AC_ARG_WITH(tifflib,[  --with-tifflib=path         Set location of TIFF library directory],[TIFFLIB="$withval"], [TIFFLIB=nope])
+
+AC_MSG_CHECKING(for TIFF header files)
+
+dirs="$TIFFINC $TIFF/include /usr/include $prefix/tiff/include $prefix/tiff34/include /usr/local/include/tiff34 /usr/local/include/tiff /usr/include/tiff34 /usr/include/tiff /opt/tiff/include /opt/tiff34/include /usr/local/include /opt/include /opt/include/tiff /opt/include/tiff34 /usr/pkg/include"
+for i in $dirs ; do
+	if test -r $i/tiff.h; then
+		AC_MSG_RESULT($i)
+		TIFFINC="-I$i"
+		break
+	fi
+done
+if test "$TIFFINC" = nope; then
+	TIFFINC=""
+    	AC_MSG_RESULT(not found)
+fi
+
+AC_MSG_CHECKING(for TIFF library)
+dirs="$TIFFLIB $TIFFLIB/lib /usr/lib $prefix/tiff/lib $prefix/tiff34/lib /usr/local/lib/tiff34 /usr/local/lib/tiff /usr/lib/tiff /usr/lib/tiff34 /opt/tiff/lib /opt/tiff34/lib /usr/local/lib /opt/lib /opt/lib/tiff /opt/lib/tiff34 /usr/pkg/lib"
+
+for i in $dirs ; do
+	if test -r $i/libtiff.so; then
+		AC_MSG_RESULT($i)
+		TIFFLIB="$i"
+		TIFFLINK="-L$i -ltiff"
+		DEFINES="$DEFINES -DHAVE_LIBTIFF"
+	    break
+	elif test -r $i/libtiff34.so; then
+		AC_MSG_RESULT($i)
+		TIFFLIB="$i"
+		TIFFLINK="-L$i -ltiff34"
+		DEFINES="$DEFINES -DHAVE_LIBTIFF"
+	    break
+	elif test -r $i/libtiff.a; then
+		AC_MSG_RESULT($i)
+		TIFFLIB="$i"
+		TIFFLINK="-L$i -ltiff"
+		DEFINES="$DEFINES -DHAVE_LIBTIFF"
+	    break
+	elif test -r $i/libtiff34.a; then
+		AC_MSG_RESULT($i)
+		TIFFLIB="$i"
+		TIFFLINK="-L$i -ltiff34"
+		DEFINES="$DEFINES -DHAVE_LIBTIFF"
+	    break
+	fi
+done
+if test "$TIFFLIB" = nope; then
+	AC_MSG_RESULT(not found)
+	TIFFLIB=""
+	TIFFINC=""
+fi
+
+AC_SUBST(TIFFINC)
+AC_SUBST(TIFFLINK)
+
+#----------------------------------------------------------------
+# Look for JPEG library -- needed for TIFFlib only
+#----------------------------------------------------------------
+
+JPEGLIB=nope
+JPEGLINK=nope
+JPEG=nope
+
+AC_ARG_WITH(jpeg,[  --with-jpeg=path            Set location of JPEG source directory],[JPEG="$withval"], [JPEG=nope])
+AC_ARG_WITH(jpeglib,[  --with-jpeglib=path         Set location of JPEG library directory],[JPEGLIB="$withval"], [JPEGLIB=nope])
+
+AC_MSG_CHECKING(for JPEG library)
+dirs="$JPEGLIB $JPEGLIB/lib /usr/lib $prefix/jpeg/lib /usr/local/lib/jpeg /usr/lib/jpeg /opt/jpeg/lib /usr/local/lib /opt/lib /opt/lib/jpeg /usr/pkg/lib"
+
+for i in $dirs ; do
+	if test -r $i/libjpeg.so; then
+		AC_MSG_RESULT($i)
+		JPEGLINK="-L$i -ljpeg"
+	    break
+	elif test -r $i/libjpeg.a; then
+		AC_MSG_RESULT($i)
+		JPEGLINK="-L$i -ljpeg"
+	    break
+	fi
+done
+
+if test "$JPEGLINK" = nope; then
+	AC_MSG_RESULT(not found)
+	JPEGLINK=""
+fi
+
+# We don't use the JPEG library directly but only need it for TIFFlib
+if test "$TIFFLINK" != "nope"; then
+    TIFFLINK="$TIFFLINK $JPEGLINK"
+fi
+
+#----------------------------------------------------------------
+# Look for zlib
+#----------------------------------------------------------------
+
+ZLIBINC=nope
+ZLIBLIB=nope
+ZLIBLINK=nope
+AC_ARG_WITH(zlib,[  --with-zlib=path            Set location of ZLIB source directory],[
+	ZLIB="$withval"], [ZLIB=nope])
+AC_ARG_WITH(zlibincl,[  --with-zlibincl=path        Set location of ZLIB include directory],[
+	ZLIBINC="$withval"], [ZLIBINC=nope])
+AC_ARG_WITH(zliblib,[  --with-zliblib=path         Set location of ZLIB library directory],[
+	ZLIBLIB="$withval"], [ZLIBLIB=nope])
+
+AC_MSG_CHECKING(for ZLIB header files)
+
+dirs="$ZLIBINC $ZLIB/include $prefix/zlib/include /usr/local/include/zlib /usr/include/zlib /opt/zlib/include /usr/local/include /opt/include /opt/include/zlib /usr/include"
+for i in $dirs ; do
+	if test -r $i/zlib.h; then
+		AC_MSG_RESULT($i)
+		ZLIBINC="-I$i"
+		break
+	fi
+done
+if test "$ZLIBINC" = nope; then
+	ZLIBINC="-I/usr/local/include/zlib"
+    	AC_MSG_RESULT(not found)
+fi
+
+AC_MSG_CHECKING(for ZLIB library)
+dirs="$ZLIBLIB $ZLIBLIB/lib /usr/lib $prefix/zlib/lib /usr/local/lib/zlib /usr/lib/zlib /opt/zlib/lib /usr/local/lib /opt/lib /opt/lib/zlib"
+
+for i in $dirs ; do
+	if test -r $i/libz.so; then
+		AC_MSG_RESULT($i)
+		ZLIBLIB="$i"
+		ZLIBLINK="-L$i -lz"
+		DEFINES="$DEFINES -DHAVE_LIBZ"
+	    break
+	elif test -r $i/libgz.so; then
+		AC_MSG_RESULT($i)
+		ZLIBLIB="$i"
+		ZLIBLINK="-L$i -lgz"
+		DEFINES="$DEFINES -DHAVE_LIBZ"
+	    break
+	elif test -r $i/libz.a; then
+		AC_MSG_RESULT($i)
+		ZLIBLIB="$i"
+		ZLIBLINK="-L$i -lz"
+		DEFINES="$DEFINES -DHAVE_LIBZ"
+	    break
+	elif test -r $i/libgz.a; then
+		AC_MSG_RESULT($i)
+		ZLIBLIB="$i"
+		ZLIBLINK="-L$i -lgz"
+		DEFINES="$DEFINES -DHAVE_LIBZ"
+	    break
+	fi
+done
+if test "$ZLIBLIB" = nope; then
+	AC_MSG_RESULT(not found)
+	ZLIBLIB="/usr/local/lib/"
+fi
+
+# Avoid duplicate include directories
+if test "$ZLIBINC" = "$TIFFINC"; then
+    ZLIBINC=""
+fi
+
+AC_SUBST(ZLIBINC)
+AC_SUBST(ZLIBLINK)
+
+# These are used to tell the Makefile what to actually do,
+# depending on the available language bindings.
+
+BINDINGS="pdflib_c"
+BINDINGS_INSTALL="pdflib_c_install"
+BINDINGS_UNINSTALL="pdflib_c_uninstall"
+BINDINGS_TEST="pdflib_c_test"
+
+if test "$WITH_CXX" = "yes" ; then
+    BINDINGS="$BINDINGS pdflib_cpp";
+    BINDINGS_INSTALL="$BINDINGS_INSTALL pdflib_cpp_install";
+    BINDINGS_UNINSTALL="$BINDINGS_UNINSTALL pdflib_cpp_uninstall";
+    BINDINGS_TEST="$BINDINGS_TEST pdflib_cpp_test";
+fi
+if test "$WITH_JAVA" = "yes" ; then
+    BINDINGS="$BINDINGS pdflib_java";
+    BINDINGS_INSTALL="$BINDINGS_INSTALL pdflib_java_install";
+    BINDINGS_UNINSTALL="$BINDINGS_UNINSTALL pdflib_java_uninstall";
+    BINDINGS_TEST="$BINDINGS_TEST pdflib_java_test";
+fi
+if test "$WITH_PERL" = "yes" ; then
+    BINDINGS="$BINDINGS pdflib_perl";
+    BINDINGS_INSTALL="$BINDINGS_INSTALL pdflib_perl_install";
+    BINDINGS_UNINSTALL="$BINDINGS_UNINSTALL pdflib_perl_uninstall";
+    BINDINGS_TEST="$BINDINGS_TEST pdflib_perl_test";
+fi
+if test "$WITH_PYTHON" = "yes" ; then
+    BINDINGS="$BINDINGS pdflib_python";
+    BINDINGS_INSTALL="$BINDINGS_INSTALL pdflib_python_install";
+    BINDINGS_UNINSTALL="$BINDINGS_UNINSTALL pdflib_python_uninstall";
+    BINDINGS_TEST="$BINDINGS_TEST pdflib_python_test";
+fi
+if test "$WITH_TCL" = "yes" ; then
+    BINDINGS="$BINDINGS pdflib_tcl";
+    BINDINGS_INSTALL="$BINDINGS_INSTALL pdflib_tcl_install";
+    BINDINGS_UNINSTALL="$BINDINGS_UNINSTALL pdflib_tcl_uninstall";
+    BINDINGS_TEST="$BINDINGS_TEST pdflib_tcl_test";
+fi
+
+DEFINES="$CFLAGS $DEFINES"
+
+if test "$WITH_DEBUG" = "yes" ; then
+    DEFINES="$DEFINES -DDEBUG"
+    WITH_STATIC="yes"
+fi
+
+PDFLIB_STATIC=libpdf$VERSION.a
+
+case $ac_sys_system in
+    NetBSD*) PDFLIB_SHARED=libpdf$SO.$VERSION;;
+    *)	PDFLIB_SHARED=libpdf$VERSION$SO;;
+esac
+
+# $PDFLIB is the name of the PDFlib library file, either static or shared
+
+if test "$WITH_STATIC" = "yes" ; then
+	# no language bindings without shared libraries
+	BINDINGS=""
+	BINDINGS_INSTALL=""
+	BINDINGS_UNINSTALL=""
+	BINDINGS_TEST=""
+	CCSHARED=""
+	PDFLIB=$PDFLIB_STATIC
+else
+	PDFLIB=$PDFLIB_SHARED
+fi
+
+AC_SUBST(BINDINGS)
+AC_SUBST(BINDINGS_INSTALL)
+AC_SUBST(BINDINGS_UNINSTALL)
+AC_SUBST(BINDINGS_TEST)
+
+# avoid garbage in our linkage variable $PDFLIBLINK
+if test "$TIFFLINK" = nope; then
+   	TIFFLINK=""
+fi
+if test "$ZLIBLINK" = nope; then
+   	ZLIBLINK=""
+fi
+
+# PDFLIBLINK contains the flags needed to link a program against PDFlib.
+# This must work with the shared as well as the dynamic version.
+
+case $ac_sys_system in
+    NetBSD*) PDFLIBLINK="-lpdf $TIFFLINK $ZLIBLINK -lm";;
+    *) PDFLIBLINK="-lpdf$VERSION $TIFFLINK $ZLIBLINK -lm";;
+esac
+
+AC_SUBST(PDFLIB)
+AC_SUBST(PDFLIB_STATIC)
+AC_SUBST(PDFLIB_SHARED)
+AC_SUBST(PDFLIBLINK)
+AC_SUBST(DEFINES)
+
+# ---------- Generate the Makefiles
+
+AC_OUTPUT(
+bind/c/Makefile
+bind/cpp/Makefile
+bind/java/Makefile
+bind/perl/Makefile
+bind/perl/Makefile.PL
+bind/python/Makefile
+bind/tcl/Makefile
+clients/Makefile
+pdflib/Makefile
+test/Makefile
+util/Makefile
+Makefile
+)
