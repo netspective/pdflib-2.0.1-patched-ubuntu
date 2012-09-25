@@ -1,0 +1,52 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:592: checking MACHDEP
+configure:631: checking for gcc
+configure:708: checking whether the C compiler (gcc  ) works
+configure:722: gcc -o conftest    conftest.c  1>&5
+configure:742: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:747: checking whether we are using GNU C
+configure:771: checking whether gcc accepts -g
+configure:799: checking how to run the C preprocessor
+configure:870: checking for a BSD compatible install
+configure:922: checking for ranlib
+configure:966: checking for c++
+configure:997: checking whether the C++ compiler (c++  ) works
+configure:1011: c++ -o conftest    conftest.C  1>&5
+configure:1037: checking whether the C++ compiler (c++  ) is a cross-compiler
+configure:1042: checking whether we are using GNU C++
+configure:1066: checking whether c++ accepts -g
+configure:1132: checking SO
+configure:1146: checking LDSHARED
+configure:1172: checking CCSHARED
+configure:1220: checking LINKFORSHARED
+configure:1283: checking for Java header files
+configure:1291: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1287:17: fatal error: jni.h: No such file or directory
+compilation terminated.
+configure: failed program was:
+#line 1286 "configure"
+#include "confdefs.h"
+#include <jni.h>
+configure:1366: checking for Tcl header files
+configure:1374: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1370:17: fatal error: tcl.h: No such file or directory
+compilation terminated.
+configure: failed program was:
+#line 1369 "configure"
+#include "confdefs.h"
+#include <tcl.h>
+configure:1414: checking for tclsh8.1
+configure:1414: checking for tclsh8.0
+configure:1414: checking for tclsh7.6
+configure:1414: checking for tclsh7.5
+configure:1414: checking for tclsh
+configure:1507: checking for Python header files
+configure:1558: checking for perl
+configure:1591: checking for Perl5 files
+configure:1690: checking for TIFF header files
+configure:1706: checking for TIFF library
+configure:1771: checking for JPEG library
+configure:1832: checking for ZLIB header files
+configure:1848: checking for ZLIB library

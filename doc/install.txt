@@ -1,0 +1,49 @@
+Building PDFlib on Unix systems
+===============================
+
+To start the make process on Unix, type
+
+./configure
+make
+
+Optionally, to run sample PDFlib applications in several programming
+environments (including the scripting languages which have been
+detected by configure), type:
+
+make test
+
+In order to install the library and the support for all detected
+scripting languages, type:
+
+make install
+
+If you want to install only selected parts (e.g., only the PDFlib
+C library or the Perl support), type "make install" in the
+respective library.
+
+
+Available configure options
+===========================
+
+Several options can used with the configure script in order
+to override some default configuration options, or to assist
+configure in finding some software locations on your machine:
+
+--with-debug                Enable debugging configuration (implies static)
+--with-static               Enable building the static library
+--with-java=path            Set location of Java Developers Kit
+--with-tcl=path             Set location of Tcl executable
+--with-tclpkg=path          Set location of Tcl package install directory
+--with-tclincl=path         Set location of Tcl include directory
+--with-py=path              Set location of Python root directory
+--with-pyincl=path          Set location of Python include directory
+--with-perl5=path           Set location of Perl5 executable
+--with-perlincl=path    Set location of Perl include directory
+--with-tiff=path            Set location of TIFF source directory
+--with-tiffincl=path    Set location of TIFF include directory
+--with-tifflib=path        Set location of TIFF library directory
+--with-jpeg=path            Set location of JPEG source directory
+--with-jpeglib=path         Set location of JPEG library directory
+--with-zlib=path            Set location of ZLIB source directory
+--with-zlibincl=path    Set location of ZLIB include directory
+--with-zliblib=path        Set location ZLIB library directory

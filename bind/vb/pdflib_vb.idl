@@ -1,0 +1,290 @@
+/*---------------------------------------------------------------------------*
+ |        PDFlib - A library for dynamically generating PDF files            |
+ +---------------------------------------------------------------------------+
+ |        Copyright (c) 1997-1999 Thomas Merz. All rights reserved.          |
+ +---------------------------------------------------------------------------+
+ |    This software is not in the public domain.  It is subject to the       |
+ |    "Aladdin Free Public License".  See the file license.txt for details.  |
+ |    This license grants you the right to use and redistribute PDFlib       |
+ |    under certain conditions. Among other things, the license requires     |
+ |    that the copyright notice and this notice be preserved on all copies.  |
+ |    This requirement extends to ports to other programming languages.      |
+ |                                                                           |
+ |    In short, you are allowed to develop and use PDFlib-based software     |
+ |    as long as you don't sell it. Commercial use of PDFlib requires a      |
+ |    commercial license which can be obtained from the author of PDFlib.    |
+ |    Contact information can be found in the accompanying PDFlib manual.    |
+ |    PDFlib is distributed with no warranty of any kind. Commercial users,  |
+ |    however, will receive warranty and support statements in writing.      |
+ *---------------------------------------------------------------------------*/
+
+// pdflib.idl
+//
+// IDL file for the PDFlib type library pdflib.tlb
+//
+
+[	uuid(17A5ABE0-473D-11d3-95D3-0010A4004174),	// our unique UID
+    helpstring("PDFlib 2.01 Type library by Thomas Merz"),
+    lcid (0x00000000),				// language 0 = neutral
+    version(2.01)
+]
+
+library PDFlib {			// library name
+
+[ dllname("pdflib_vb.dll") ]
+
+module PDFlib {				// class name
+
+
+[entry("PDF_boot"), helpstring("Boot PDFlib (currently not required)"),]
+void PDF_boot(void);
+
+[entry("PDF_shutdown"), helpstring("Shut down PDFlib (currently not required)"),]
+void PDF_shutdown(void);
+
+[entry("PDF_get_opaque"), helpstring("Fetch opaque application pointer stored in PDFlib"),]
+void *PDF_get_opaque([in] long p);
+
+[entry("PDF_new2"), helpstring("Create new PDF object, optionally supplying error handler and memory allocation routines"),]
+long PDF_new2([in] long errorhandler, [in] long allocproc, [in] long reallocproc, [in] long freeproc, [in] long opaque);
+//long PDF_new2([in] void (*errorhandler)(long p, int type, LPCSTR msg), [in] long allocproc, [in] long reallocproc, [in] long freeproc, [in] long opaque);
+
+[entry("PDF_new"), helpstring("Create a new PDF object"),]
+long PDF_new(void);
+
+[entry("PDF_delete"), helpstring("Delete a PDF object"),]
+void PDF_delete([in] long p);
+
+[entry("PDF_open_file"), helpstring("Open a new PDF file associated with p, using the supplied file name"),]
+int PDF_open_file([in] long p, [in] LPCSTR filename);
+
+[entry("PDF_close"), helpstring("Close the generated PDF file"),]
+void PDF_close([in] long p);
+
+[entry("PDF_begin_page"), helpstring("Start a new page"),]
+void PDF_begin_page([in] long p, [in] float width, [in] float height);
+
+[entry("PDF_end_page"), helpstring("Finish the page"),]
+void PDF_end_page([in] long p);
+
+[entry("PDF_set_transition"), helpstring("Set a transition effect for the current page"),]
+void PDF_set_transition([in] long p, [in] LPCSTR type);
+
+[entry("PDF_set_duration"), helpstring("Set the duration for a page transition effect"),]
+void PDF_set_duration([in] long p, [in] float t);
+
+[entry("PDF_set_parameter"), helpstring(""),]
+void PDF_set_parameter([in] long p, [in] LPCSTR key, [in] LPCSTR value);
+
+[entry("PDF_show"), helpstring("Print text in the current font at the current position"),]
+void PDF_show([in] long p, [in] LPCSTR text);
+
+[entry("PDF_show_xy"), helpstring("Print text in the current font at (x, y)"),]
+void PDF_show_xy([in] long p, [in] LPCSTR text, [in] float x, [in] float y);
+
+[entry("PDF_continue_text"), helpstring("Print text at the next line"),]
+void PDF_continue_text([in] long p, [in] LPCSTR text);
+
+[entry("PDF_set_leading"), helpstring("Set the distance between text baselines"),]
+void PDF_set_leading([in] long p, [in] float l);
+
+[entry("PDF_set_text_rise"), helpstring("Set the text rise parameter"),]
+void PDF_set_text_rise([in] long p, [in] float rise);
+
+[entry("PDF_set_horiz_scaling"), helpstring("Set horizontal text scaling in percent"),]
+void PDF_set_horiz_scaling([in] long p, [in] float scale);
+
+[entry("PDF_set_text_rendering"), helpstring("Set text rendering mode"),]
+void PDF_set_text_rendering([in] long p, [in] int mode);
+
+[entry("PDF_set_text_matrix"), helpstring("Set a transformation matrix to be applied to the current font"),]
+void PDF_set_text_matrix([in] long p, [in] float a, [in] float b, [in] float c, [in] float d, [in] float e, [in] float f);
+
+[entry("PDF_set_text_pos"), helpstring("Set the text output position to (x, y)"),]
+void PDF_set_text_pos([in] long p, [in] float x, [in] float y);
+
+[entry("PDF_set_char_spacing"), helpstring("Set the horizontal character spacing in text space units"),]
+void PDF_set_char_spacing([in] long p, [in] float spacing);
+
+[entry("PDF_set_word_spacing"), helpstring("Set the horizontal word spacing in text space units"),]
+void PDF_set_word_spacing([in] long p, [in] float spacing);
+
+[entry("PDF_get_fontname"), helpstring("Return the name of the current font"),]
+LPCSTR PDF_get_fontname([in] long p);
+
+[entry("PDF_get_fontsize"), helpstring("Return the size of the current font"),]
+float PDF_get_fontsize([in] long p);
+
+[entry("PDF_get_font"), helpstring("Return the identifier of the current font"),]
+int PDF_get_font([in] long p);
+
+[entry("PDF_stringwidth"), helpstring("Return the width of text in an arbitrary font which has been selected with PDF_findfont()"),]
+float PDF_stringwidth([in] long p, [in] LPCSTR text, [in] int font, [in] float size);
+
+[entry("PDF_findfont"), helpstring("Prepare a font for later use with PDF_setfont(). The metrics will be loaded, and if embed is nonzero, the font file will be checked (but not yet used)."),]
+int PDF_findfont([in] long p, [in] LPCSTR fontname, [in] LPCSTR encoding, [in] int embed);
+
+[entry("PDF_setfont"), helpstring("Set the current font in the give size. The font descriptor must have been retrieved via PDF_findfont()"),]
+void PDF_setfont([in] long p, [in] int font, [in] float fontsize);
+
+[entry("PDF_save"),	helpstring("Save the current graphics state"),]
+long PDF_save ([in] long p);
+
+[entry("PDF_restore"),	helpstring("Restore the most recently saved graphics state"),]
+long PDF_restore ([in] long p);
+
+[entry("PDF_translate"), helpstring("Translate the origin of the coordinate system to (tx, ty)"),]
+long PDF_translate ([in] long p, [in] float tx, [in] float ty);
+
+[entry("PDF_scale"), helpstring("Scale the coordinate system by (sx, sy)"),]
+void PDF_scale([in] long p, [in] float sx, [in] float sy);
+
+[entry("PDF_rotate"), helpstring("Rotate the coordinate system by phi degrees"),]
+long PDF_rotate ([in] long p, [in] float phi);
+
+[entry("PDF_setdash"), helpstring("Set the current dash pattern to d1 white and d2 black units"),]
+void PDF_setdash([in] long p, [in] float d1, [in] float d2);
+
+[entry("PDF_setpolydash"), helpstring("Set a more complicated dash pattern defined by an array"),]
+void PDF_setpolydash([in] long p, [in] float *darray, [in] int length);
+
+[entry("PDF_setflat"), helpstring("Set the flatness to a value between 0 and 100 inclusive"),]
+void PDF_setflat([in] long p, [in] float flat);
+
+[entry("PDF_set_fillrule"), helpstring("Set the current fill rule to winding or evenodd"),]
+void PDF_set_fillrule([in] long p, [in] LPCSTR *fillrule);
+
+[entry("PDF_setlinejoin"), helpstring("Set the line join parameter to a value between 0 and 2 inclusive"),]
+void PDF_setlinejoin([in] long p, [in] float join);
+
+[entry("PDF_setlinecap"), helpstring("Set the linecap parameter to a value between 0 and 2 inclusive"),]
+void PDF_setlinecap([in] long p, [in] float cap);
+
+[entry("PDF_setmiterlimit"), helpstring("Set the miter limit to a value greater than or equal to 1"),]
+void PDF_setmiterlimit([in] long p, [in] float miter);
+
+[entry("PDF_setlinewidth"), helpstring("Set the current linewidth to width"),]
+void PDF_setlinewidth([in] long p, [in] float width);
+
+[entry("PDF_moveto"), helpstring("Set the current point to (x, y)"),]
+long PDF_moveto ([in] long p, [in] float x, [in] float y);
+
+[entry("PDF_lineto"), helpstring("Draw a line from the current point to (x, y)"),]
+long PDF_lineto ([in] long p, [in] float x, [in] float y);
+
+[entry("PDF_curveto"), helpstring("Draw a Bezier curve from the current point, using 3 more control points"),]
+void PDF_curveto([in] long p, [in] float x1, [in] float y1, [in] float x2, [in] float y2, [in] float x3, [in] float y3);
+
+[entry("PDF_circle"), helpstring("Draw a circle with center (x, y) and radius r"),]
+void PDF_circle([in] long p, [in] float x, [in] float y, [in] float r);
+
+[entry("PDF_arc"), helpstring("Draw a circular arc with center (x, y), radius r from alpha1 to alpha2"),]
+void PDF_arc([in] long p, [in] float x, [in] float y, [in] float r, [in] float alpha1, [in] float alpha2);
+
+[entry("PDF_rect"), helpstring("Draw a rectangle at lower left (x, y) with width and height"),]
+void PDF_rect([in] long p, [in] float x, [in] float y, [in] float width, [in] float height);
+
+[entry("PDF_closepath"), helpstring("Close the current path"),]
+void PDF_closepath([in] long p);
+
+[entry("PDF_stroke"), helpstring("Stroke the path with the current color and line width,and clear it"),]
+void PDF_stroke([in] long p);
+
+[entry("PDF_closepath_stroke"), helpstring("Close the path, and stroke it"),]
+void PDF_closepath_stroke([in] long p);
+
+[entry("PDF_fill"), helpstring("Fill the interior of the path with the current fill color"),]
+void PDF_fill([in] long p);
+
+[entry("PDF_fill_stroke"), helpstring("Fill and stroke the path with the current fill and stroke color"),]
+void PDF_fill_stroke([in] long p);
+
+[entry("PDF_closepath_fill_stroke"), helpstring("Close the path, fill, and stroke it"),]
+void PDF_closepath_fill_stroke([in] long p);
+
+[entry("PDF_endpath"), helpstring("End the current path"),]
+void PDF_endpath([in] long p);
+
+[entry("PDF_clip"), helpstring("Use the current path as clipping path"),]
+void PDF_clip([in] long p);
+
+[entry("PDF_setgray_fill"), helpstring("Set the current fill color to a gray value between 0 and 1 inclusive"),]
+void PDF_setgray_fill([in] long p, [in] float g);
+
+[entry("PDF_setgray_stroke"), helpstring("Set the current stroke color to a gray value between 0 and 1 inclusive"),]
+void PDF_setgray_stroke([in] long p, [in] float g);
+
+[entry("PDF_setgray"), helpstring("Set the current fill and stroke color"),]
+void PDF_setgray([in] long p, [in] float g);
+
+[entry("PDF_setrgbcolor_fill"), helpstring("Set the current fill color to the supplied RGB values"),]
+void PDF_setrgbcolor_fill([in] long p, [in] float red, [in] float green, [in] float blue);
+
+[entry("PDF_setrgbcolor_stroke"), helpstring("Set the current stroke color to the supplied RGB values"),]
+void PDF_setrgbcolor_stroke([in] long p, [in] float red, [in] float green, [in] float blue);
+
+[entry("PDF_setrgbcolor"), helpstring("Set the current fill and stroke color to the supplied RGB values"),]
+void PDF_setrgbcolor([in] long p, [in] float red, [in] float green, [in] float blue);
+
+[entry("PDF_get_image_width"), helpstring("Return the width of an image"),]
+int PDF_get_image_width([in] long p, [in] int image);
+
+[entry("PDF_get_image_height"), helpstring("Return the height of an image"),]
+int PDF_get_image_height([in] long p, [in] int image);
+
+[entry("PDF_place_image"), helpstring("Place an image at the lower left corner (x, y), and scale it"),]
+void PDF_place_image([in] long p, [in] int image, [in] float x, [in] float y, [in] float scale);
+
+[entry("PDF_open_image"), helpstring("Use image data from memory or file reference. Returns an image descriptor or -1"),]
+int PDF_open_image([in] long p, [in] LPCSTR type, [in] LPCSTR source, [in] LPCSTR data, [in] long len, [in] int width, [in] int height, [in] int components, [in] int bpc, [in] LPCSTR params);
+
+[entry("PDF_open_JPEG"), helpstring("Open a JPEG image for later use. Returns an image descriptor or -1"),]
+int PDF_open_JPEG([in] long p, [in] LPCSTR filename);
+
+[entry("PDF_open_TIFF"), helpstring("Open a TIFF image for later use. Returns an image descriptor or -1"),]
+int PDF_open_TIFF([in] long p, [in] LPCSTR filename);
+
+[entry("PDF_open_GIF"), helpstring("Open a GIF image for later use. Returns an image descriptor or -1"),]
+int PDF_open_GIF([in] long p, [in] LPCSTR filename);
+
+[entry("PDF_open_CCITT"), helpstring("Open a raw CCITT image for later use. Returns an image descriptor or -1"),]
+int PDF_open_CCITT([in] long p, [in] LPCSTR filename);
+
+[entry("PDF_close_image"), helpstring("Close an image retrieved with one of the PDF_open_*() image functions. Usually not required, the image file will be closed anyway when the open function is done."),]
+void PDF_close_image([in] long p, [in] int image);
+
+[entry("PDF_add_bookmark"), helpstring("Add a nested bookmark under parent, or a new top-level bookmark if level = 0. Returns a bookmark descriptor which may be used as parent for subesequent nested bookmarks"),]
+void PDF_add_bookmark([in] long p, [in] LPCSTR text, [in] int parent, [in] int open);
+
+[entry("PDF_set_info"),	helpstring("Fill document information field key with value"),]
+long PDF_set_info ([in] long p, [in] LPCSTR key, [in] LPCSTR value);
+
+[entry("PDF_attach_file"), helpstring("Add a file attachment annotation"),]
+void PDF_attach_file([in] long p, [in] float llx, [in] float lly, [in] float urx, [in] float ury, [in] LPCSTR filename, [in] LPCSTR description, [in] LPCSTR author, [in] LPCSTR mimetype, [in] LPCSTR icon);
+
+[entry("PDF_add_note"), helpstring("Add a note annotation"),]
+void PDF_add_note([in] long p, [in] float llx, [in] float lly, [in] float urx, [in] float ury, [in] LPCSTR contents, [in] LPCSTR title, [in] LPCSTR icon, [in] int open);
+
+[entry("PDF_add_pdflink"), helpstring("Add a file link annotation (to a PDF file)"),]
+void PDF_add_pdflink([in] long p, [in] float llx, [in] float lly, [in] float urx, [in] float ury, [in] LPCSTR filename, [in] int page, [in] LPCSTR dest);
+
+[entry("PDF_add_launchlink"), helpstring("Add a launch annotation (arbitrary file type)"),]
+void PDF_add_launchlink([in] long p, [in] float llx, [in] float lly, [in] float urx, [in] float ury, [in] LPCSTR filename);
+
+[entry("PDF_add_locallink"), helpstring("Add a link annotation with a target within the current file"),]
+void PDF_add_locallink([in] long p, [in] float llx, [in] float lly, [in] float urx, [in] float ury, [in] int page, [in] LPCSTR dest);
+
+[entry("PDF_add_weblink"), helpstring("Add a weblink annotation"),]
+void PDF_add_weblink([in] long p, [in] float llx, [in] float lly, [in] float urx, [in] float ury, [in] LPCSTR url);
+
+[entry("PDF_set_border_style"), helpstring("Set the border style for all kinds of annotations. These settings are used for all annotations until a new style is set"),]
+void PDF_set_border_style([in] long p, [in] LPCSTR style, [in] float width);
+
+[entry("PDF_set_border_color"), helpstring("Set the border color for all kinds of annotations"),]
+void PDF_set_border_color([in] long p, [in] float red, [in] float green, [in] float blue);
+
+[entry("PDF_set_border_dash"), helpstring("Set the border dash style for all kinds of annotations"),]
+void PDF_set_border_dash([in] long p, [in] float d1, [in] float d2);
+ 
+}	// module
+}	// library
